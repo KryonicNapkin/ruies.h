@@ -3,7 +3,7 @@ RayLib UI elements is a small library that provides a few (exactly three) basic 
 
 ## Installation
 First you need to have raylib installed for this library to work!
-Check [raylib](https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux) for installation guide
+Check [raylib](https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux#install-on-gnu-linux) for installation guide
 
 After you are done installing raylib follow these steps below
 ```bash

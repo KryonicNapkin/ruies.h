@@ -3,7 +3,7 @@ RayLib UI elements is a small library that provides a few (exactly three) basic 
 
 ## Installation
 First you need to have raylib installed for this library to work!
-Check [raylib](https://github.com/raysan5/raylib) for installation guide
+Check [raylib](https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux) for installation guide
 
 After you are done installing raylib follow these steps below
 ```bash
@@ -11,7 +11,7 @@ After you are done installing raylib follow these steps below
 git clone https://github.com/KryonicNapkin/rlui_elems
 cd rlui_elems
 # the default font used by the elements is Iosevka Nerd Font Bold
-cp rlui_elems.c rlui_elems.h IosevkaNerdFont-Bold.ttf \<your project path\>
+cp rlui_elems.c rlui_elems.h IosevkaNerdFont-Bold.ttf <your project path>/
 ```
 
 And thats it!
@@ -20,7 +20,7 @@ And thats it!
 You need all the neccessery flags that are required by raylib and also link rlui_elems.c file to your main.c file 
 ```bash
 # Compile
-gcc -Wall -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -o \<output\> \<main.c\> rlui_elems.c
+gcc -Wall -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -o <output> <main_file> rlui_elems.c
 ```
 
 BABABOOM! Its done!

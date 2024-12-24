@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "rlui_elems.h"
 #include "raylib.h"
+#include "rlui_elems.h"
 
 int _current_elem_idx = 0;
 
@@ -31,12 +31,12 @@ button_t make_button(int32_t posx, int32_t posy, int32_t width, int32_t height, 
         btn.text = rl_ui_strdup(text);
     }
 
-    btn.text_font = GetFontDefault();
-    btn.font_sz = 10;
-    btn.border_width_px = 0;
-    btn.border_fg = BLACK;
-    btn.button_bg = WHITE;
-    btn.text_fg = BLACK;
+    btn.text_font = LoadFontEx(DEF_FONT_PATH, DEF_BUTTON_FONT_SZ, NULL, 0);
+    btn.font_sz = DEF_BUTTON_FONT_SZ;
+    btn.border_width_px = DEF_BUTTON_BORDER_WIDTH;
+    btn.border_fg = DEF_BUTTON_BORDER_FG_COLOR;
+    btn.button_bg = DEF_BUTTON_BG_COLOR;
+    btn.text_fg = DEF_BUTTON_TEXT_FG_COLOR;
     btn.highlighting = highlight_on_hover;
     return btn;
 }
@@ -242,15 +242,11 @@ void render_button(button_t button) {
     /* Checks whether highlighting is enabled */
     if (button_hover && button.highlighting) {
         DrawRectangle(button.posx, button.posy, button.width, button.height, button.border_fg_highlight);
-        if (button.border_width_px != 0) {
-            DrawRectangleV(_get_button_with_border_pos(button), _get_button_with_border_dims(button), button.button_bg_highlight);
-        }
+        DrawRectangleV(_get_button_with_border_pos(button), _get_button_with_border_dims(button), button.button_bg_highlight);
         DrawTextEx(button.text_font, button.text, _get_button_text_pos(button), button.font_sz, 0, button.text_fg_highlight);
     } else {
         DrawRectangle(button.posx, button.posy, button.width, button.height, button.border_fg);
-        if (button.border_width_px != 0) {
-            DrawRectangleV(_get_button_with_border_pos(button), _get_button_with_border_dims(button), button.button_bg);
-        }
+        DrawRectangleV(_get_button_with_border_pos(button), _get_button_with_border_dims(button), button.button_bg);
         DrawTextEx(button.text_font, button.text, _get_button_text_pos(button), button.font_sz, 0, button.text_fg);
     }
 }

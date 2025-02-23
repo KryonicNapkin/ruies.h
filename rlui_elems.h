@@ -6,10 +6,7 @@
  *     Credit: raysan5's raygui library - https://www.github.com/raysan5/raygui
  */
 
-/* 
- * TODO: make loading font efficient by loading font just once DONE
- *       make more ui elements like (Toggle, CheckBox, OptionList, Label)
- */
+/*  TODO: make more ui elements like (Toggle, CheckBox, OptionList, Label) */
 
 #ifndef RLUI_ELEMS_H_
 #define RLUI_ELEMS_H_

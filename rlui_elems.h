@@ -591,6 +591,7 @@ void render_button(button_t button) {
         DrawRectangle(button.bounds.x, button.bounds.y, button.bounds.width, button.bounds.height, button.style.border_color_normal);
         DrawRectangleV(__get_button_with_border_pos(button), __get_button_with_border_dims(button), button.style.base_color_normal);
         DrawTextEx(button.font, button.text, __get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_normal);
+    /* NOTE: If you want to see button blick you need to set target fps to 60 using raylib's SetTargetFPS(60) */
     } else if (state == CLICKED) {
         DrawRectangle(button.bounds.x, button.bounds.y, button.bounds.width, button.bounds.height, button.style.border_color_clicked);
         DrawRectangleV(__get_button_with_border_pos(button), __get_button_with_border_dims(button), button.style.base_color_clicked);

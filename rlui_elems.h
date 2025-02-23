@@ -213,9 +213,9 @@ void render_button_grid(button_grid_t buttons);
 void render_titlebar(titlebar_t titlebar);
 
 /* Internal functions for rendering */
-Vector2 _get_button_with_border_pos(button_t button);
-Vector2 _get_button_with_border_dims(button_t button);
-Vector2 _get_button_text_pos(button_t button);
+Vector2 __get_button_with_border_pos(button_t button);
+Vector2 __get_button_with_border_dims(button_t button);
+Vector2 __get_button_text_pos(button_t button);
 
 /* Element information getting functions */
 elem_state_t get_button_state(button_t button);
@@ -589,16 +589,16 @@ void render_button(button_t button) {
     enum ElemState state = get_button_state(button);
     if (state == NORMAL) {
         DrawRectangle(button.bounds.x, button.bounds.y, button.bounds.width, button.bounds.height, button.style.border_color_normal);
-        DrawRectangleV(_get_button_with_border_pos(button), _get_button_with_border_dims(button), button.style.base_color_normal);
-        DrawTextEx(button.font, button.text, _get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_normal);
+        DrawRectangleV(__get_button_with_border_pos(button), __get_button_with_border_dims(button), button.style.base_color_normal);
+        DrawTextEx(button.font, button.text, __get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_normal);
     } else if (state == CLICKED) {
         DrawRectangle(button.bounds.x, button.bounds.y, button.bounds.width, button.bounds.height, button.style.border_color_clicked);
-        DrawRectangleV(_get_button_with_border_pos(button), _get_button_with_border_dims(button), button.style.base_color_clicked);
-        DrawTextEx(button.font, button.text, _get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_clicked);
+        DrawRectangleV(__get_button_with_border_pos(button), __get_button_with_border_dims(button), button.style.base_color_clicked);
+        DrawTextEx(button.font, button.text, __get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_clicked);
     } else if (state == FOCUSED) {
         DrawRectangle(button.bounds.x, button.bounds.y, button.bounds.width, button.bounds.height, button.style.border_color_focused);
-        DrawRectangleV(_get_button_with_border_pos(button), _get_button_with_border_dims(button), button.style.base_color_focused);
-        DrawTextEx(button.font, button.text, _get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_focused);
+        DrawRectangleV(__get_button_with_border_pos(button), __get_button_with_border_dims(button), button.style.base_color_focused);
+        DrawTextEx(button.font, button.text, __get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_focused);
     }
 }
 
@@ -645,7 +645,7 @@ void render_titlebar(titlebar_t titlebar) {
 }
 
 /* Internal function to calculate the position of the boundsagle relative to border width */
-Vector2 _get_button_with_border_pos(button_t button) {
+Vector2 __get_button_with_border_pos(button_t button) {
     Vector2 button_border_pos = {0};
     button_border_pos.x = button.bounds.x+button.style.border_width;
     button_border_pos.y = button.bounds.y+button.style.border_width;
@@ -653,7 +653,7 @@ Vector2 _get_button_with_border_pos(button_t button) {
 }
 
 /* Internal functin to calculate the dimensions of the boundsagle relative to border width */
-Vector2 _get_button_with_border_dims(button_t button) {
+Vector2 __get_button_with_border_dims(button_t button) {
     Vector2 button_border_dims = {0};
     button_border_dims.x = button.bounds.width-(2*button.style.border_width);
     button_border_dims.y = button.bounds.height-(2*button.style.border_width);
@@ -661,7 +661,7 @@ Vector2 _get_button_with_border_dims(button_t button) {
 }
 
 /* Internal function to calculate the text position of a button */
-Vector2 _get_button_text_pos(button_t button) {
+Vector2 __get_button_text_pos(button_t button) {
     Vector2 button_text_pos = {0};
     button_text_pos.x = button.bounds.x+((button.bounds.width-MeasureTextEx(button.font, button.text, button.style.font_size, 0).x)/2);
     button_text_pos.y = button.bounds.y+((button.bounds.height-MeasureTextEx(button.font, button.text, button.style.font_size, 0).y)/2);

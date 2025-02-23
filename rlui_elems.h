@@ -152,10 +152,10 @@ typedef enum ElemState       elem_state_t;
 #define BASE_COLOR_CLICKED   (Color){0xE5, 0xC0, 0x7B, 0xFF}
 #define TEXT_COLOR_CLICKED   (Color){0x28, 0x2C, 0x34, 0xFF} 
 
-#define BORDER_WIDTH         1
+#define __BORDER_WIDTH       1
 
 /* NOTE: For custom font loading you must initialize a new fontloader with you custom font loading function */
-#define FONT_SIZE           10.0f                    /* Set font size */
+#define __FONT_SIZE          10.0f                    /* Set font size */
 
 /* variable to keep track of current element id */
 int __current_elem_idx;
@@ -246,8 +246,8 @@ int __current_elem_idx = 0;
         .border_color_clicked = BORDER_COLOR_CLICKED,
         .base_color_clicked   = BASE_COLOR_CLICKED,
         .text_color_clicked   = TEXT_COLOR_CLICKED,
-        .font_size            = FONT_SIZE,
-        .border_width         = BORDER_WIDTH,
+        .font_size            = __FONT_SIZE,
+        .border_width         = __BORDER_WIDTH,
         .fontloader           = &GetFontDefault,
         .text_alignment       = ALIGN_CENTER,
         .horizontal_padding   = NO_HPADDING,
@@ -264,8 +264,8 @@ int __current_elem_idx = 0;
         .border_color_clicked = BORDER_COLOR_CLICKED,
         .base_color_clicked   = BASE_COLOR_CLICKED,
         .text_color_clicked   = TEXT_COLOR_CLICKED,
-        .font_size            = FONT_SIZE,
-        .border_width         = BORDER_WIDTH,
+        .font_size            = __FONT_SIZE,
+        .border_width         = __BORDER_WIDTH,
         .fontloader           = &GetFontDefault,
         .text_alignment       = ALIGN_CENTER,
         .horizontal_padding   = NO_HPADDING,
@@ -281,8 +281,8 @@ int __current_elem_idx = 0;
         .border_color_clicked = BORDER_COLOR_CLICKED,
         .base_color_clicked   = BASE_COLOR_CLICKED,
         .text_color_clicked   = TEXT_COLOR_CLICKED,
-        .font_size            = FONT_SIZE,
-        .border_width         = BORDER_WIDTH,
+        .font_size            = __FONT_SIZE,
+        .border_width         = __BORDER_WIDTH,
         .fontloader           = &GetFontDefault,
         .text_alignment       = ALIGN_CENTER,
         .horizontal_padding   = NO_HPADDING,

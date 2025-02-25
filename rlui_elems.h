@@ -6,36 +6,39 @@
  *     Credit: raysan5's raygui library - https://www.github.com/raysan5/raygui
  */
 
-/*  TODO: make more ui elements like (Toggle, CheckBox, OptionList, Label) */
+/*  TODO: make more ui elements like (CheckBox, OptionList, Label) */
 
 #ifndef RLUI_ELEMS_H_
 #define RLUI_ELEMS_H_
 
-#include <stdint.h>                    /* For type compatibility */
+/* #define USE_CUSTOM_FONT
+#define RLUI_ELEMS_IMPLEMENTATION
+#include "raylib.h" */
 
-#ifdef INCLUDE_RAYLIB                  /* if you want to include raylib */
-    #include "raylib.h"
-#endif
+#include <stdint.h>                    /* For type compatibility */
 
 typedef int64_t elem_idx;
 
-typedef struct RluiRectangle {
+typedef struct ElemBounds {
     int x;
     int y;
     int width;
     int height;
-} rlui_rect_t;
+} elem_bounds_t;
 
 enum Elements {
     BUTTON = 0,
     BUTTON_GRID,
     TITLEBAR,
+    TOGGLE,
+    ALL_ELEMENTS,
 };
 
 enum ElemState {
     NORMAL = 0,
     FOCUSED,
     CLICKED,
+    ALL_STATES,
 };
 /* alignment of text */
 enum TextAlignment {
@@ -43,54 +46,41 @@ enum TextAlignment {
     ALIGN_CENTER,
     ALIGN_RIGHT,
 };
-/* Padding */
-struct PaddingH {
-    uint32_t from_left;
-    uint32_t from_right;
-};
 
-struct PaddingV {
-    uint32_t from_top;
-    uint32_t from_down;
-};
-
-struct ElemStyle {
-    Color border_color_normal;
-    Color base_color_normal;
-    Color text_color_normal;
-    Color border_color_focused;
-    Color base_color_focused;
-    Color text_color_focused;
-    Color border_color_clicked;
-    Color base_color_clicked;
-    Color text_color_clicked;
-
-    float font_size;
-
-    int32_t border_width;
-    Font (*fontloader)(void);
-
-    enum TextAlignment text_alignment;
-    struct PaddingH horizontal_padding;
-    struct PaddingV vertical_padding;
+#define MAX_ELEMENTS_COUNT     4
+#define MAX_ELEMENT_ATTRIBUTES 20
+struct GlobalStyle {
+    uint32_t elem_styles[MAX_ELEMENTS_COUNT][MAX_ELEMENT_ATTRIBUTES];
+    Font (*fontloader[MAX_ELEMENTS_COUNT])(void);
 };
 
 /* Button attributes for the button_grid function */
 enum ElemAttr {
-    ATTR_BORDER_COLOR_NORMAL,
+    ATTR_BORDER_COLOR_NORMAL = 0,
     ATTR_BASE_COLOR_NORMAL,
     ATTR_TEXT_COLOR_NORMAL,
+
     ATTR_BORDER_COLOR_FOCUSED,
     ATTR_BASE_COLOR_FOCUSED,
     ATTR_TEXT_COLOR_FOCUSED,
+
     ATTR_BORDER_COLOR_CLICKED,
     ATTR_BASE_COLOR_CLICKED,
     ATTR_TEXT_COLOR_CLICKED,
+
+    ATTR_FONT_SIZE,
     ATTR_BORDER_WIDTH,
     ATTR_TEXT_ALIGNMENT,
-    ATTR_HORIZ_PADDING,
-    ATTR_VERTI_PADDING,
-    ATTR_FONT,
+
+    ATTR_LEFT_PADDING,
+    ATTR_RIGHT_PADDING,
+    ATTR_TOP_PADDING,
+    ATTR_BOTTOM_PADDING,
+
+    ATTR_TITLEBAR_TOP_BORDER_WIDTH,
+    ATTR_TITLEBAR_BOTTOM_BORDER_WIDTH,
+    ATTR_TITLEBAR_LEFT_BORDER_WIDTH,
+    ATTR_TITLEBAR_RIGHT_BORDER_WIDTH,
 };
 
 /*------------------------------------------------------------*/
@@ -100,100 +90,108 @@ enum ElemAttr {
 /* Button structure */
 struct Button {
     elem_idx idx;
-    rlui_rect_t bounds;
+    elem_bounds_t bounds;
     char* text;
     Font font;
-    struct ElemStyle style;
+    uint32_t style[MAX_ELEMENT_ATTRIBUTES];
     enum ElemState state;
 };
 
 /* ButtonGrid structure */
 struct ButtonGrid {
     struct Button* buttons;
+    Font font;
     uint32_t rows;
     uint32_t cols;
     int32_t origin_posx, origin_posy;
     uint32_t horizontal_spacing;
     uint32_t vertical_spacing;
+    uint32_t style[MAX_ELEMENT_ATTRIBUTES];
 };
 
 /* Titlebar structure */
 struct TitleBar {
     elem_idx idx;
-    rlui_rect_t bounds;
+    elem_bounds_t bounds;
     char* text;
     Font font;
-    struct ElemStyle style;
+    uint32_t style[MAX_ELEMENT_ATTRIBUTES];
     enum ElemState state;
 };
 
-/* Typedefs */
-typedef struct PaddingH      hpadding_t;
-typedef struct PaddingV      vpadding_t;
-typedef struct TitleBar      titlebar_t;
-typedef struct ButtonGrid    button_grid_t;
+/* Toggle structure */
+struct Toggle {
+    elem_idx idx;
+    elem_bounds_t bounds;
+    char* text;
+    Font font;
+    uint32_t style[MAX_ELEMENT_ATTRIBUTES];
+    enum ElemState state;
+};
+
+/*------------------------------------------------------------*/
+/*----------------------    TYPEDEFS    ----------------------*/
+/*------------------------------------------------------------*/
+
 typedef struct Button        button_t;
+typedef struct ButtonGrid    button_grid_t;
+typedef struct TitleBar      titlebar_t;
+typedef struct Toggle        toggle_t;
 typedef enum TextAlignment   text_align_t;
-typedef struct ElemStyle     style_t; 
 typedef enum ElemAttr        elem_attr_t; 
 typedef enum ElemState       elem_state_t; 
 
-#define NO_HPADDING          (hpadding_t){0, 0}
-#define NO_VPADDING          (vpadding_t){0, 0}
-
 /* Default values for the global style */
-#define BORDER_COLOR_NORMAL  (Color){0x28, 0x2C, 0x34, 0xFF}
-#define BASE_COLOR_NORMAL    (Color){0x98, 0xC3, 0x79, 0xFF}
-#define TEXT_COLOR_NORMAL    (Color){0x28, 0x2C, 0x34, 0xFF} 
-#define BORDER_COLOR_FOCUSED (Color){0x28, 0x2C, 0x34, 0xFF} 
-#define BASE_COLOR_FOCUSED   (Color){0x61, 0xAF, 0xEF, 0xFF}
-#define TEXT_COLOR_FOCUSED   (Color){0x28, 0x2C, 0x34, 0xFF} 
-#define BORDER_COLOR_CLICKED (Color){0x28, 0x2C, 0x34, 0xFF} 
-#define BASE_COLOR_CLICKED   (Color){0xE5, 0xC0, 0x7B, 0xFF}
-#define TEXT_COLOR_CLICKED   (Color){0x28, 0x2C, 0x34, 0xFF} 
+#define BORDER_COLOR_NORMAL  0x282C34FF
+#define BASE_COLOR_NORMAL    0x98C379FF
+#define TEXT_COLOR_NORMAL    0x282C34FF 
+#define BORDER_COLOR_FOCUSED 0x282C34FF 
+#define BASE_COLOR_FOCUSED   0x61AFEFFF
+#define TEXT_COLOR_FOCUSED   0x282C34FF 
+#define BORDER_COLOR_CLICKED 0x282C34FF 
+#define BASE_COLOR_CLICKED   0xE5C07BFF
+#define TEXT_COLOR_CLICKED   0x282C34FF 
 
 #define __BORDER_WIDTH       1
 
 /* NOTE: For custom font loading you must initialize a new fontloader with you custom font loading function */
-#define __FONT_SIZE          10.0f                    /* Set font size */
+#define DEFAULT_FONTLOADER   &GetFontDefault
+#define __FONT_SIZE          10                      /* Set font size */
 
 /* variable to keep track of current element id */
 int __current_elem_idx;
 
 /* Default style for the elements */
-#ifdef USE_ELEM_SPECIFIC_STYLES
-    struct ElemStyle __button_style;
-    struct ElemStyle __titlebar_style;
-#else
-    struct ElemStyle __global_style;
-#endif
+struct GlobalStyle __style;
 
 /*-------------------------------------------------------------*/
-/*-----------------   Function declarations   -----------------*/
+/*-----------------   FUNCTION DECLARATIONS   -----------------*/
 /*-------------------------------------------------------------*/
 
 #ifdef USE_CUSTOM_FONT
-    void set_font_loader_function(style_t* style, Font (*fontloader)(void));
+    void set_font_loader_function(enum Elements elem, Font (*fontloader)(void));
 #endif /* USE_CUSTOM_FONT */
 
-/* Global style manipulation functions */
-/* NOTE: These functions should be called before making of any element */
-void set_new_global_style(style_t new_style);
-void update_style(style_t* style, style_t new_style);
-
 /* Element making functions */
-button_t make_button(rlui_rect_t bounds, const char* text);
-titlebar_t make_titlebar(rlui_rect_t bounds, const char* text);
+button_t make_button(elem_bounds_t bounds, const char* text);
+titlebar_t make_titlebar(elem_bounds_t bounds, const char* text);
 /* NOTE: This function allocates memory for the buttons on the heap! 
  * You should call free_button_grid() after CloseWindow() */
-button_grid_t make_button_grid(int32_t origin_posx, int32_t origin_posy, uint32_t rows, 
-                               uint32_t cols, button_t orig_button, const char* text[], 
-                               int32_t horizontal_spacing, int32_t vertical_spacing);
+button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint32_t cols,
+                               elem_bounds_t sample_bounds, const char* text[],
+                               uint32_t horizontal_spacing, uint32_t vertical_spacing);
+toggle_t make_toggle(elem_bounds_t bounds, const char* text);
+
+/* Style functions */
+uint32_t* get_style(enum Elements elem, int* size);
+uint32_t get_style_value(enum Elements elem, enum ElemAttr attr);
 
 /* Attributes changing functions */
-void set_button_style(button_t* button, enum ElemAttr attr, int32_t value);
-void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, int32_t value);
-void button_grid_attr(button_grid_t* grid, enum ElemAttr attr, int32_t value);
+void set_button_style(button_t* button, enum ElemAttr attr, uint32_t value);
+void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, uint32_t value);
+void button_grid_attr(button_grid_t* grid, enum ElemAttr attr, uint32_t value);
+void set_toggle_style(toggle_t* toggle, enum ElemAttr attr, uint32_t value);
+void set_allstyle(enum Elements elem, enum ElemAttr attr, uint32_t value);
 /* void set_button_font(button_t* button, Font (*fontloader)(void)); */
 
 /* Button releated functions */
@@ -208,23 +206,29 @@ void render_button(button_t button);
 void vrender_button(int count, ...);
 void render_button_grid(button_grid_t buttons);
 void render_titlebar(titlebar_t titlebar);
+void render_toggle(toggle_t toggle);
 
 /* Internal functions for rendering */
-Vector2 __get_button_with_border_pos(button_t button);
-Vector2 __get_button_with_border_dims(button_t button);
-Vector2 __get_button_text_pos(button_t button);
+Vector2 __get_elem_with_border_pos(elem_bounds_t bounds, uint32_t border_width);
+Vector2 __get_elem_with_border_dims(elem_bounds_t bounds, uint32_t border_width);
+Vector2 __get_elem_text_pos(elem_bounds_t bounds, Font font, const char* text);
 
-/* Element information getting functions */
-elem_state_t get_button_state(button_t button);
-elem_state_t get_button_grid_state(button_grid_t grid, elem_idx* changed_button_idx);
-elem_state_t get_buttons_state(int count, elem_idx* changed_button_idx, ...);
+/* Element state handling getting functions */
+void watch_button_state(button_t* button, elem_state_t active_on, bool* active);
+void watch_button_grid_state(button_grid_t* button_grid, elem_idx* changed_button_idx, elem_state_t active_on, bool* active);
+void watch_titlebar_state(titlebar_t* titlebar, elem_state_t active_on, bool* active);
+void watch_toggle_state(toggle_t* toggle, bool* active);
+
+void watch_many_buttons_state(int count, elem_state_t active_on, bool* active, elem_idx* changed_button_idx, ...);
+
+int get_button_index_in_grid_by_its_idx(button_grid_t button_grid, elem_idx idx);
 
 /* Memory management functions */
 void free_button_grid(button_grid_t button_grid);
 
 /* Miscellaneous functions */
 char* rlui_strdup(const char* str);
-Color __int2color(int32_t color);
+Color __int2color(uint32_t color);
 
 #ifdef RLUI_ELEMS_IMPLEMENTATION
 
@@ -235,88 +239,70 @@ Color __int2color(int32_t color);
 int __current_elem_idx = 0;
 
 /* STYLE DEFINITIONS OF THE ELEMENTS */
-#ifndef USE_ELEM_SPECIFIC_STYLES
-    struct ElemStyle __global_style = {
-        .border_color_normal  = BORDER_COLOR_NORMAL,
-        .base_color_normal    = BASE_COLOR_NORMAL,
-        .text_color_normal    = TEXT_COLOR_NORMAL,
-        .border_color_focused = BORDER_COLOR_FOCUSED,
-        .base_color_focused   = BASE_COLOR_FOCUSED,
-        .text_color_focused   = TEXT_COLOR_FOCUSED,
-        .border_color_clicked = BORDER_COLOR_CLICKED,
-        .base_color_clicked   = BASE_COLOR_CLICKED,
-        .text_color_clicked   = TEXT_COLOR_CLICKED,
-        .font_size            = __FONT_SIZE,
-        .border_width         = __BORDER_WIDTH,
-        .fontloader           = &GetFontDefault,
-        .text_alignment       = ALIGN_CENTER,
-        .horizontal_padding   = NO_HPADDING,
-        .vertical_padding     = NO_VPADDING,
-    };
-#else
-    struct ElemStyle __button_style = {
-        .border_color_normal  = BORDER_COLOR_NORMAL,
-        .base_color_normal    = BASE_COLOR_NORMAL,
-        .text_color_normal    = TEXT_COLOR_NORMAL,
-        .border_color_focused = BORDER_COLOR_FOCUSED,
-        .base_color_focused   = BASE_COLOR_FOCUSED,
-        .text_color_focused   = TEXT_COLOR_FOCUSED,
-        .border_color_clicked = BORDER_COLOR_CLICKED,
-        .base_color_clicked   = BASE_COLOR_CLICKED,
-        .text_color_clicked   = TEXT_COLOR_CLICKED,
-        .font_size            = __FONT_SIZE,
-        .border_width         = __BORDER_WIDTH,
-        .fontloader           = &GetFontDefault,
-        .text_alignment       = ALIGN_CENTER,
-        .horizontal_padding   = NO_HPADDING,
-        .vertical_padding     = NO_VPADDING,
-    };
-    struct ElemStyle __titlebar_style = {
-        .border_color_normal  = BORDER_COLOR_NORMAL,
-        .base_color_normal    = BASE_COLOR_NORMAL,
-        .text_color_normal    = TEXT_COLOR_NORMAL,
-        .border_color_focused = BORDER_COLOR_FOCUSED,
-        .base_color_focused   = BASE_COLOR_FOCUSED,
-        .text_color_focused   = TEXT_COLOR_FOCUSED,
-        .border_color_clicked = BORDER_COLOR_CLICKED,
-        .base_color_clicked   = BASE_COLOR_CLICKED,
-        .text_color_clicked   = TEXT_COLOR_CLICKED,
-        .font_size            = __FONT_SIZE,
-        .border_width         = __BORDER_WIDTH,
-        .fontloader           = &GetFontDefault,
-        .text_alignment       = ALIGN_CENTER,
-        .horizontal_padding   = NO_HPADDING,
-        .vertical_padding     = NO_VPADDING,
-    };
-#endif
-
-#ifdef USE_ELEM_SPECIFIC_STYLES
-    #define DEFAULT_BUTTON_STYLE   &__button_style
-    #define DEFAULT_TITLEBAR_STYLE &__titlebar_style
-#endif
-
-#define DEFAULT_STYLE              &__global_style
-
+struct GlobalStyle __style = {
+    .elem_styles = {
+        /* Button */
+        {
+            BORDER_COLOR_NORMAL,  BASE_COLOR_NORMAL,   TEXT_COLOR_NORMAL, 
+            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED,  TEXT_COLOR_FOCUSED,
+            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED,  TEXT_COLOR_CLICKED,
+            __FONT_SIZE, __BORDER_WIDTH, ALIGN_CENTER, 
+            0, 0, 0, 0
+        }, 
+        /* Button Grid */
+        { 
+            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL, 
+            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED, TEXT_COLOR_FOCUSED,
+            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED, TEXT_COLOR_CLICKED,
+            __FONT_SIZE, __BORDER_WIDTH, ALIGN_CENTER, 
+            0, 0, 0, 0
+        }, 
+        /* Titlebar */
+        { 
+            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL, 
+            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED, TEXT_COLOR_FOCUSED,
+            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED, TEXT_COLOR_CLICKED,
+            __FONT_SIZE, __BORDER_WIDTH, ALIGN_LEFT, 
+            10, 0, 0, 0,      0, 0, 0, 0
+        },
+        /* TOGGLE */
+        { 
+            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL, 
+            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED, TEXT_COLOR_FOCUSED,
+            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED, TEXT_COLOR_CLICKED,
+            __FONT_SIZE, __BORDER_WIDTH, ALIGN_CENTER, 
+            10, 0, 0, 0
+        },
+    }, 
+    .fontloader = {DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER},
+};
 
 /* NOTE: fontloader function should be generated using raylib's ExportFontAsCode() function
  *       and you should remove the check for IsGpuReady in the .h file for this function to 
  *       correctly load your desired font 
  */
 #ifdef USE_CUSTOM_FONT
-    void set_font_loader_function(style_t* style, Font (*fontloader)(void)) {
-        style->fontloader = fontloader;
-        style->font_size = fontloader().baseSize;
+    void set_font_loader_function(enum Elements elem, Font (*fontloader)(void)) {
+        Font font = fontloader();
+        if (elem == ALL_ELEMENTS) {
+            for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
+                __style.fontloader[i] = fontloader;
+                __style.elem_styles[i][ATTR_FONT_SIZE] = font.baseSize;
+            }
+        } else { 
+            __style.fontloader[elem] = fontloader;
+            __style.elem_styles[elem][ATTR_FONT_SIZE] = font.baseSize;
+        }
     }
 #endif /* USE_CUSTOM_FONT */
+
 /* Function for creation of a button */
-button_t make_button(rlui_rect_t bounds, const char* text) {
+button_t make_button(elem_bounds_t bounds, const char* text) {
     button_t btn = {0};
-    /* Assaign to every button a unique id for pressing function */
+    /* Assaign a unique id to a button */
     btn.idx = (!__current_elem_idx ? 0 : __current_elem_idx+1);
-    btn.bounds.x = bounds.x;
-    btn.bounds.y = bounds.y;
-    btn.bounds.width = bounds.width;
-    btn.bounds.height = bounds.height;
+    __current_elem_idx += 1;
+    btn.bounds = bounds;
 
     /* Check if user didn't provided any title to the function */
     if (text == NULL) {
@@ -325,25 +311,19 @@ button_t make_button(rlui_rect_t bounds, const char* text) {
         btn.text = rlui_strdup(text);
     }
 
-    #ifdef USE_ELEM_SPECIFIC_STYLES
-        btn.style = __button_style;
-    #else 
-        btn.style = __global_style;
-    #endif /* BUTTON SPECIFIC STYLE */
-    btn.font = btn.style.fontloader();
+    memcpy(&btn.style, &__style.elem_styles[BUTTON], sizeof(uint32_t)*MAX_ELEMENT_ATTRIBUTES);
+    btn.font = __style.fontloader[BUTTON]();
     btn.state = NORMAL;
     return btn;
 }
 
 /* Function to create a titlebar */
-titlebar_t make_titlebar(rlui_rect_t bounds, const char* text) {
+titlebar_t make_titlebar(elem_bounds_t bounds, const char* text) {
     titlebar_t titlebar = {0};
     /* Assaign an unique id to every created titlebar */
     titlebar.idx = (!__current_elem_idx ? 0 : __current_elem_idx+1);
-    titlebar.bounds.x = bounds.x;
-    titlebar.bounds.y = bounds.y;
-    titlebar.bounds.width = bounds.width;
-    titlebar.bounds.height = bounds.height;
+    __current_elem_idx += 1;
+    titlebar.bounds = bounds;
     /* Check if no title was provided */
     if (text == NULL) {
         titlebar.text = rlui_strdup("");
@@ -351,24 +331,19 @@ titlebar_t make_titlebar(rlui_rect_t bounds, const char* text) {
         titlebar.text = rlui_strdup(text);
     }
 
-    #ifdef USE_ELEM_SPECIFIC_STYLES
-        titlebar.style = __titlebar_style;
-    #else 
-        titlebar.style = __global_style;
-    #endif /* TITLEBAR SPECIFIC STYLE */
-
-    titlebar.font = titlebar.style.fontloader();
+    memcpy(&titlebar.style, &__style.elem_styles[TITLEBAR], sizeof(uint32_t)*MAX_ELEMENT_ATTRIBUTES);
+    titlebar.font = __style.fontloader[TITLEBAR]();
     titlebar.state = NORMAL;
     return titlebar;
 }
 
-button_grid_t make_button_grid(int32_t origin_posx, int32_t origin_posy, uint32_t rows, uint32_t cols, button_t orig_button, const char* text[], int32_t horizontal_spacing, int32_t vertical_spacing) {
+button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint32_t cols, elem_bounds_t sample_bounds, const char* text[], uint32_t horizontal_spacing, uint32_t vertical_spacing) {
     uint32_t num_of_buttons = rows*cols;
     button_grid_t button_grid;
     button_grid.buttons = (struct Button*)malloc(sizeof(button_t) * (rows*cols));
 
     /* Count the number of texts assaigned to every button in an array */
-    int count = 0;
+    uint32_t count = 0;
     char* fallback_name = NULL;
     bool is_text_null = false;
     if (text == NULL) {
@@ -384,25 +359,29 @@ button_grid_t make_button_grid(int32_t origin_posx, int32_t origin_posy, uint32_
         fallback_name = rlui_strdup(text[count-1]);
     }
     /* Replicate the properties of the original button to every button desired to be created and assaign a specific id to it */
-    for (int i = 0; i < num_of_buttons; ++i) {
-        memmove(&button_grid.buttons[i], &orig_button, sizeof(button_t));
+    button_grid.font = __style.fontloader[BUTTON_GRID]();
+    memcpy(&button_grid.style, &__style.elem_styles[BUTTON_GRID], sizeof(uint32_t)*MAX_ELEMENT_ATTRIBUTES);
+    for (uint32_t i = 0; i < num_of_buttons; ++i) {
+        button_grid.buttons[i].font = button_grid.font;
+        button_grid.buttons[i].bounds = sample_bounds;
+        memcpy(&button_grid.buttons[i].style, &button_grid.style, sizeof(uint32_t)*MAX_ELEMENT_ATTRIBUTES);
         button_grid.buttons[i].idx = __current_elem_idx + 1;
         __current_elem_idx += 1;
     }
     /* Calculate the position of every button relative to the provided horizontal and vertical spacing */
     int32_t vertical_step = 0;
     int32_t horizontal_step = 0;
-    for (int n = 0; n < num_of_buttons; ++n) {
-        button_grid.buttons[n].bounds.x = origin_posx+horizontal_step;
-        button_grid.buttons[n].bounds.y = origin_posy+vertical_step;
-        horizontal_step += (orig_button.bounds.width+horizontal_spacing);
+    for (uint32_t n = 0; n < num_of_buttons; ++n) {
+        button_grid.buttons[n].bounds.x = posx+horizontal_step;
+        button_grid.buttons[n].bounds.y = posy+vertical_step;
+        horizontal_step += (sample_bounds.width+horizontal_spacing);
         if ((n+1) % cols == 0) {
-            vertical_step += (orig_button.bounds.height+vertical_spacing);
+            vertical_step += (sample_bounds.height+vertical_spacing);
             horizontal_step = 0;
         }
     }
     /* Assaign text to every button */
-    for (int x = 0; x < num_of_buttons; ++x) {
+    for (uint32_t x = 0; x < num_of_buttons; ++x) {
         if (x >= count || is_text_null) {
             button_grid.buttons[x].text = rlui_strdup(fallback_name);
         } else {
@@ -410,8 +389,8 @@ button_grid_t make_button_grid(int32_t origin_posx, int32_t origin_posy, uint32_
         }
     }
     /* Set other properties of a button array */
-    button_grid.origin_posx = origin_posx;
-    button_grid.origin_posy = origin_posy;
+    button_grid.origin_posx = posx;
+    button_grid.origin_posy = posy;
     button_grid.horizontal_spacing = horizontal_spacing;
     button_grid.vertical_spacing = vertical_spacing;
     button_grid.rows = rows;
@@ -423,100 +402,65 @@ button_grid_t make_button_grid(int32_t origin_posx, int32_t origin_posy, uint32_
     return button_grid;
 }
 
-/* Function to change attributes of button */
-void set_button_style(button_t* button, enum ElemAttr attr, int32_t value) {
-    switch (attr) {
-        case ATTR_BORDER_COLOR_NORMAL:
-            button->style.border_color_normal = __int2color(value);
-            break;
-        case ATTR_BASE_COLOR_NORMAL:
-            button->style.base_color_normal = __int2color(value);
-            break;
-        case ATTR_TEXT_COLOR_NORMAL:
-            button->style.text_color_normal = __int2color(value);
-            break;
-        case ATTR_BORDER_COLOR_FOCUSED:
-            button->style.border_color_focused = __int2color(value);
-            break;
-        case ATTR_BASE_COLOR_FOCUSED:
-            button->style.base_color_focused = __int2color(value);
-            break;
-        case ATTR_TEXT_COLOR_FOCUSED:
-            button->style.text_color_focused = __int2color(value);
-            break;
-        case ATTR_BORDER_COLOR_CLICKED:
-            button->style.border_color_clicked = __int2color(value);
-            break;
-        case ATTR_BASE_COLOR_CLICKED:
-            button->style.base_color_clicked = __int2color(value);
-            break;
-        case ATTR_TEXT_COLOR_CLICKED:
-            button->style.text_color_clicked = __int2color(value);
-            break;
-        case ATTR_BORDER_WIDTH:
-            button->style.border_width = value;
-            break;
-        case ATTR_TEXT_ALIGNMENT:
-            button->style.text_alignment = (enum TextAlignment)value;
-            break;
-        case ATTR_HORIZ_PADDING:
-            button->style.horizontal_padding.from_left = value;
-            button->style.horizontal_padding.from_right = value;
-            break;
-        default:
-            break;
+toggle_t make_toggle(elem_bounds_t bounds, const char* text) {
+    toggle_t toggle = {0};
+    toggle.idx = (!__current_elem_idx ? 0 : __current_elem_idx+1);
+    __current_elem_idx += 1;
+    toggle.bounds = bounds;
+
+    if (text == NULL) {
+        toggle.text = rlui_strdup("");
+    } else {
+        toggle.text = rlui_strdup(text);
     }
+
+    memcpy(&toggle.style, &__style.elem_styles[TOGGLE], sizeof(uint32_t)*MAX_ELEMENT_ATTRIBUTES);
+    toggle.font = __style.fontloader[TOGGLE]();
+    toggle.state = NORMAL;
+    return toggle;
+}
+
+uint32_t* get_style(enum Elements elem, int* size) {
+    if (elem == ALL_ELEMENTS) {
+        *size = -1;
+        return NULL;
+    }
+    *size = sizeof(__style.elem_styles[elem])/sizeof(__style.elem_styles[elem][0]);
+    return __style.elem_styles[elem];
+}
+
+uint32_t get_style_value(enum Elements elem, enum ElemAttr attr) {
+    if (elem == ALL_ELEMENTS) return -1;
+    return __style.elem_styles[elem][attr];
+}
+/* Function to change attributes of button */
+void set_button_style(button_t* button, enum ElemAttr attr, uint32_t value) {
+    button->style[attr] = value;
 }
 
 /* Function to change attributes of the titlebar */
-void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, int32_t value) {
-    switch (attr) {
-        case ATTR_BORDER_COLOR_NORMAL:
-            titlebar->style.border_color_normal = __int2color(value);
-            break;
-        case ATTR_BASE_COLOR_NORMAL:
-            titlebar->style.base_color_normal = __int2color(value);
-            break;
-        case ATTR_TEXT_COLOR_NORMAL:
-            titlebar->style.text_color_normal = __int2color(value);
-            break;
-        case ATTR_BORDER_COLOR_FOCUSED:
-            titlebar->style.border_color_focused = __int2color(value);
-            break;
-        case ATTR_BASE_COLOR_FOCUSED:
-            titlebar->style.base_color_focused = __int2color(value);
-            break;
-        case ATTR_TEXT_COLOR_FOCUSED:
-            titlebar->style.text_color_focused = __int2color(value);
-            break;
-        case ATTR_BORDER_COLOR_CLICKED:
-            titlebar->style.border_color_clicked = __int2color(value);
-            break;
-        case ATTR_BASE_COLOR_CLICKED:
-            titlebar->style.base_color_clicked = __int2color(value);
-            break;
-        case ATTR_TEXT_COLOR_CLICKED:
-            titlebar->style.text_color_clicked = __int2color(value);
-            break;
-        case ATTR_BORDER_WIDTH:
-            titlebar->style.border_width = value;
-            break;
-        case ATTR_TEXT_ALIGNMENT:
-            titlebar->style.text_alignment = (enum TextAlignment)value;
-            break;
-        case ATTR_HORIZ_PADDING:
-            titlebar->style.horizontal_padding.from_left = value;
-            titlebar->style.horizontal_padding.from_right = value;
-            break;
-        default:
-            break;
-    }
+void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, uint32_t value) {
+    titlebar->style[attr] = value;
 }
 
 /* Function to change the attribute of every button in a button grid */
-void button_grid_attr(button_grid_t* button_grid, enum ElemAttr attr, int32_t value) {
+void button_grid_attr(button_grid_t* button_grid, enum ElemAttr attr, uint32_t value) {
     for (int i = 0; i < (button_grid->rows*button_grid->cols); ++i) {
         set_button_style(&button_grid->buttons[i], attr, value);
+    }
+}
+
+void set_toggle_style(toggle_t* toggle, enum ElemAttr attr, uint32_t value) {
+    toggle->style[attr] = value;
+}
+
+void set_allstyle(enum Elements elem, enum ElemAttr attr, uint32_t value) {
+    if (elem == ALL_ELEMENTS) {
+        for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
+            __style.elem_styles[i][attr] = value;
+        }
+    } else {
+        __style.elem_styles[elem][attr] = value;
     }
 }
 
@@ -583,21 +527,32 @@ void stretch_button_grid_verti(button_grid_t* button_grid, uint32_t vertical_spa
 
 /* Function for rendering a button */
 void render_button(button_t button) {
-    enum ElemState state = get_button_state(button);
-    if (state == NORMAL) {
-        DrawRectangle(button.bounds.x, button.bounds.y, button.bounds.width, button.bounds.height, button.style.border_color_normal);
-        DrawRectangleV(__get_button_with_border_pos(button), __get_button_with_border_dims(button), button.style.base_color_normal);
-        DrawTextEx(button.font, button.text, __get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_normal);
-    /* NOTE: If you want to see button blick you need to set target fps to 60 using raylib's SetTargetFPS(60) */
-    } else if (state == CLICKED) {
-        DrawRectangle(button.bounds.x, button.bounds.y, button.bounds.width, button.bounds.height, button.style.border_color_clicked);
-        DrawRectangleV(__get_button_with_border_pos(button), __get_button_with_border_dims(button), button.style.base_color_clicked);
-        DrawTextEx(button.font, button.text, __get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_clicked);
-    } else if (state == FOCUSED) {
-        DrawRectangle(button.bounds.x, button.bounds.y, button.bounds.width, button.bounds.height, button.style.border_color_focused);
-        DrawRectangleV(__get_button_with_border_pos(button), __get_button_with_border_dims(button), button.style.base_color_focused);
-        DrawTextEx(button.font, button.text, __get_button_text_pos(button), (float)button.style.font_size, 0, button.style.text_color_focused);
+    watch_button_state(&button, ALL_STATES, NULL);
+    Color border_color, base_color, text_color;
+    Vector2 border_bounds[2] = {
+        /* Position */
+        __get_elem_with_border_pos(button.bounds, button.style[ATTR_BORDER_WIDTH]),
+        /* Dimension */
+        __get_elem_with_border_dims(button.bounds, button.style[ATTR_BORDER_WIDTH]),
+    };
+    Vector2 text_pos = __get_elem_text_pos(button.bounds, button.font, button.text);
+    if (button.state == NORMAL) {
+        border_color = __int2color(button.style[ATTR_BORDER_COLOR_NORMAL]);
+        base_color = __int2color(button.style[ATTR_BASE_COLOR_NORMAL]);
+        text_color = __int2color(button.style[ATTR_TEXT_COLOR_NORMAL]);
+    } else if (button.state == FOCUSED) {
+        border_color = __int2color(button.style[ATTR_BORDER_COLOR_FOCUSED]);
+        base_color = __int2color(button.style[ATTR_BASE_COLOR_FOCUSED]);
+        text_color = __int2color(button.style[ATTR_TEXT_COLOR_FOCUSED]);
+    } else if (button.state == CLICKED) {
+        border_color = __int2color(button.style[ATTR_BORDER_COLOR_CLICKED]);
+        base_color = __int2color(button.style[ATTR_BASE_COLOR_CLICKED]);
+        text_color = __int2color(button.style[ATTR_TEXT_COLOR_CLICKED]);
     }
+    /* Drawing */
+    DrawRectangle(button.bounds.x, button.bounds.y, button.bounds.width, button.bounds.height, border_color);
+    DrawRectangleV(border_bounds[0], border_bounds[1], base_color);
+    DrawTextEx(button.font, button.text, text_pos, (float)button.style[ATTR_FONT_SIZE], 0, text_color);
 }
 
 /* Function to render a variadic number of buttons */
@@ -620,93 +575,200 @@ void render_button_grid(button_grid_t buttons) {
 /* Function to render a titlebar */
 void render_titlebar(titlebar_t titlebar) {
     Vector2 text_pos = {0};
-    Vector2 text_dims = MeasureTextEx(titlebar.font, titlebar.text, titlebar.style.font_size, 0);
+    Vector2 text_dims = MeasureTextEx(titlebar.font, titlebar.text, (float)titlebar.style[ATTR_FONT_SIZE], 0);
     /* Calculates the distance from the sides */
-    switch (titlebar.style.text_alignment) {
+    switch (titlebar.style[ATTR_TEXT_ALIGNMENT]) {
         case ALIGN_LEFT:
-            text_pos.x = titlebar.bounds.x+titlebar.style.horizontal_padding.from_left;
-            text_pos.y = titlebar.bounds.y+((titlebar.bounds.height-text_dims.y)/2);
+            text_pos.x = (float)(titlebar.bounds.x+titlebar.style[ATTR_LEFT_PADDING]);
+            text_pos.y = (float)(titlebar.bounds.y+((titlebar.bounds.height-text_dims.y)/2.0f));
             break;
         case ALIGN_CENTER:
-            text_pos.x = titlebar.bounds.x+((titlebar.bounds.width-text_dims.x)/2);
-            text_pos.y = titlebar.bounds.y+((titlebar.bounds.height-text_dims.y)/2);
+            text_pos.x = (float)(titlebar.bounds.x+((titlebar.bounds.width-text_dims.x)/2.0f));
+            text_pos.y = (float)(titlebar.bounds.y+((titlebar.bounds.height-text_dims.y)/2.0f));
             break;
         case ALIGN_RIGHT:
-            text_pos.x = titlebar.bounds.width-text_dims.x-titlebar.style.horizontal_padding.from_right;
-            text_pos.y = titlebar.bounds.y+((titlebar.bounds.height-text_dims.y)/2);
+            text_pos.x = (float)(titlebar.bounds.width-text_dims.x-titlebar.style[ATTR_RIGHT_PADDING]);
+            text_pos.y = (float)(titlebar.bounds.y+((titlebar.bounds.height-text_dims.y)/2.0f));
             break;
         default:
             break;
     }
-    DrawRectangle(titlebar.bounds.x, titlebar.bounds.y, titlebar.bounds.width, titlebar.bounds.height, titlebar.style.border_color_normal);
-    DrawTextEx(titlebar.font, titlebar.text, text_pos, titlebar.style.font_size, 0, titlebar.style.text_color_normal);
+    int64_t left_border_width = titlebar.style[ATTR_TITLEBAR_LEFT_BORDER_WIDTH];
+    int64_t right_border_width = titlebar.style[ATTR_TITLEBAR_RIGHT_BORDER_WIDTH];
+    int64_t top_border_width = titlebar.style[ATTR_TITLEBAR_TOP_BORDER_WIDTH];
+    int64_t bottom_border_width = titlebar.style[ATTR_TITLEBAR_BOTTOM_BORDER_WIDTH];
+
+    Color border_color_normal = __int2color(titlebar.style[ATTR_BORDER_COLOR_NORMAL]);
+
+    DrawRectangle(titlebar.bounds.x, titlebar.bounds.y, titlebar.bounds.width, titlebar.bounds.height, __int2color(titlebar.style[ATTR_BASE_COLOR_NORMAL]));
+    if (left_border_width > 0) {
+        DrawRectangle(titlebar.bounds.x, titlebar.bounds.y, left_border_width, 
+                      titlebar.bounds.height, border_color_normal);
+    }
+    if (right_border_width > 0) {
+        DrawRectangle(titlebar.bounds.x+(titlebar.bounds.width-right_border_width), titlebar.bounds.y, left_border_width, 
+                      titlebar.bounds.height, border_color_normal);
+    }
+    if (top_border_width > 0) {
+        DrawRectangle(titlebar.bounds.x, titlebar.bounds.y, titlebar.bounds.width, 
+                      top_border_width, border_color_normal);
+    }
+    if (bottom_border_width > 0) {
+        DrawRectangle(titlebar.bounds.x, titlebar.bounds.y+(titlebar.bounds.height-bottom_border_width), titlebar.bounds.width, 
+                      bottom_border_width, border_color_normal);
+    }
+    DrawTextEx(titlebar.font, titlebar.text, text_pos, (float)titlebar.style[ATTR_FONT_SIZE], 0, __int2color(titlebar.style[ATTR_TEXT_COLOR_NORMAL]));
+}
+
+void render_toggle(toggle_t toggle) {
+    watch_toggle_state(&toggle, NULL);
+    Color border_color, base_color, text_color;
+    Vector2 border_bounds[2] = {
+        /* Position */
+        __get_elem_with_border_pos(toggle.bounds, toggle.style[ATTR_BORDER_WIDTH]),
+        /* Dimension */
+        __get_elem_with_border_dims(toggle.bounds, toggle.style[ATTR_BORDER_WIDTH]),
+    };
+    Vector2 text_pos = __get_elem_text_pos(toggle.bounds, toggle.font, toggle.text);
+    if (toggle.state == NORMAL) {
+        border_color = __int2color(toggle.style[ATTR_BORDER_COLOR_NORMAL]);
+        base_color = __int2color(toggle.style[ATTR_BASE_COLOR_NORMAL]);
+        text_color = __int2color(toggle.style[ATTR_TEXT_COLOR_NORMAL]);
+    } else if (toggle.state == FOCUSED) {
+        border_color = __int2color(toggle.style[ATTR_BORDER_COLOR_FOCUSED]);
+        base_color = __int2color(toggle.style[ATTR_BASE_COLOR_FOCUSED]);
+        text_color = __int2color(toggle.style[ATTR_TEXT_COLOR_FOCUSED]);
+    } else if (toggle.state == CLICKED) {
+        border_color = __int2color(toggle.style[ATTR_BORDER_COLOR_CLICKED]);
+        base_color = __int2color(toggle.style[ATTR_BASE_COLOR_CLICKED]);
+        text_color = __int2color(toggle.style[ATTR_TEXT_COLOR_CLICKED]);
+    }
+    /* Drawing */
+    DrawRectangle(toggle.bounds.x, toggle.bounds.y, toggle.bounds.width, toggle.bounds.height, border_color);
+    DrawRectangleV(border_bounds[0], border_bounds[1], base_color);
+    DrawTextEx(toggle.font, toggle.text, text_pos, (float)toggle.style[ATTR_FONT_SIZE], 0, text_color);
 }
 
 /* Internal function to calculate the position of the boundsagle relative to border width */
-Vector2 __get_button_with_border_pos(button_t button) {
-    Vector2 button_border_pos = {0};
-    button_border_pos.x = button.bounds.x+button.style.border_width;
-    button_border_pos.y = button.bounds.y+button.style.border_width;
-    return button_border_pos;
+Vector2 __get_elem_with_border_pos(elem_bounds_t bounds, uint32_t border_width) {
+    Vector2 border_pos = {0};
+    border_pos.x = bounds.x+border_width;
+    border_pos.y = bounds.y+border_width;
+    return border_pos;
 }
 
 /* Internal functin to calculate the dimensions of the boundsagle relative to border width */
-Vector2 __get_button_with_border_dims(button_t button) {
-    Vector2 button_border_dims = {0};
-    button_border_dims.x = button.bounds.width-(2*button.style.border_width);
-    button_border_dims.y = button.bounds.height-(2*button.style.border_width);
-    return button_border_dims;
+Vector2 __get_elem_with_border_dims(elem_bounds_t bounds, uint32_t border_width) {
+    Vector2 border_dims = {0};
+    border_dims.x = bounds.width-(2*border_width);
+    border_dims.y = bounds.height-(2*border_width);
+    return border_dims;
 }
 
 /* Internal function to calculate the text position of a button */
-Vector2 __get_button_text_pos(button_t button) {
-    Vector2 button_text_pos = {0};
-    button_text_pos.x = button.bounds.x+((button.bounds.width-MeasureTextEx(button.font, button.text, button.style.font_size, 0).x)/2);
-    button_text_pos.y = button.bounds.y+((button.bounds.height-MeasureTextEx(button.font, button.text, button.style.font_size, 0).y)/2);
-    return button_text_pos;
+Vector2 __get_elem_text_pos(elem_bounds_t bounds, Font font, const char* text) {
+    Vector2 text_pos = {0};
+    text_pos.x = bounds.x+((bounds.width-MeasureTextEx(font, text, font.baseSize, 0).x)/2);
+    text_pos.y = bounds.y+((bounds.height-MeasureTextEx(font, text, font.baseSize, 0).y)/2);
+    return text_pos;
 }
 
-elem_state_t get_button_state(button_t button) {
-    elem_state_t state;
+void watch_button_state(button_t* button, elem_state_t active_on, bool* active) {
     Rectangle button_bounds = {
-        .x = (float)button.bounds.x,
-        .y = (float)button.bounds.y,
-        .width = (float)button.bounds.width,
-        .height = (float)button.bounds.height,
+        .x = (float)button->bounds.x,
+        .y = (float)button->bounds.y,
+        .width = (float)button->bounds.width,
+        .height = (float)button->bounds.height,
     };
     bool hover = CheckCollisionPointRec(GetMousePosition(), button_bounds);
-    state = NORMAL;
-    if (hover) state = FOCUSED;
-    if (hover && IsMouseButtonDown(0) && IsMouseButtonPressed(0)) state = CLICKED;
-    return state;
+    bool clicked = IsMouseButtonDown(0);
+    if (active_on == ALL_STATES || active == NULL) {
+        if (!hover && !clicked) button->state = NORMAL;
+        else if (hover && !clicked) button->state = FOCUSED;
+        else if (hover && clicked) button->state = CLICKED;
+    } else if (!hover && !clicked) {
+        if (button->state != NORMAL) *active = false;
+        else if (active_on == NORMAL) *active = true;
+        button->state = NORMAL;
+    } else if (hover && !clicked) {
+        if (button->state != FOCUSED) *active = false;
+        else if (active_on == FOCUSED) *active = true;
+        button->state = FOCUSED;
+    } else if (hover && clicked) {
+        if (button->state != CLICKED) *active = false;
+        else if (active_on == CLICKED) *active = true;
+        button->state = CLICKED;
+    }
 }
 
-elem_state_t get_button_grid_state(button_grid_t button_grid, elem_idx* changed_button_idx) {
-    elem_state_t state;
-    for (uint32_t i = 0; i < button_grid.rows*button_grid.cols; ++i) {
-        state = get_button_state(button_grid.buttons[i]);
-        if (state != NORMAL) {
-            *changed_button_idx = button_grid.buttons[i].idx;
-            return state;
+void watch_button_grid_state(button_grid_t* button_grid, elem_idx* changed_button_idx, elem_state_t active_on, bool* active) {
+    for (uint32_t i = 0; i < button_grid->rows*button_grid->cols; ++i) {
+        watch_button_state(&button_grid->buttons[i], active_on, NULL);
+        if (button_grid->buttons[i].state == active_on) {
+            *changed_button_idx = button_grid->buttons[i].idx;
+            *active = true;
+            break;
+        } else {
+            *changed_button_idx = -1;
+            *active = false;
         }
     }
 }
 
-elem_state_t get_buttons_state(int count, elem_idx* changed_button_idx, ...) {
-    elem_state_t state;
+void watch_toggle_state(toggle_t* toggle, bool* active) {
+    Rectangle toggle_bounds = {
+        .x = (float)toggle->bounds.x,
+        .y = (float)toggle->bounds.y,
+        .width = (float)toggle->bounds.width,
+        .height = (float)toggle->bounds.height,
+    };
+    bool hover = CheckCollisionPointRec(GetMousePosition(), toggle_bounds);
+    bool clicked = IsMouseButtonPressed(0);
+    if (active != NULL) {
+        if (!hover && !clicked && toggle->state != CLICKED) {
+            toggle->state = NORMAL;
+            *active = false;
+        } else if (hover && !clicked && toggle->state != CLICKED) {
+            toggle->state = FOCUSED;
+            *active = false;
+        } else if (hover && clicked && toggle->state != CLICKED) {
+            toggle->state = CLICKED;
+            *active = true;
+        } else if (hover && clicked && toggle->state == CLICKED) {
+            toggle->state = NORMAL;
+            *active = false;
+        }
+    } else {
+        if (!hover && !clicked && toggle->state != CLICKED) toggle->state = NORMAL;
+        else if (hover && !clicked && toggle->state != CLICKED) toggle->state = FOCUSED;
+        else if (hover && clicked && toggle->state != CLICKED) toggle->state = CLICKED;
+    }
+}
+
+void watch_many_buttons_state(int count, elem_state_t active_on, bool* active, elem_idx* changed_button_idx, ...) {
     va_list ap;
     va_start(ap, changed_button_idx);
     for (int i = 0; i < count; ++i) {
         button_t button = va_arg(ap, button_t);
-        state = get_button_state(button);
-        if (state != NORMAL) {
+        watch_button_state(&button, active_on, NULL);
+        if (button.state == active_on) {
             *changed_button_idx = button.idx;
-            return state;
+            *active = true;
+            break;
+        } else {
+            *changed_button_idx = -1;
+            *active = false;
         }
     }
     va_end(ap);
 }
 
+int get_button_index_in_grid_by_its_idx(button_grid_t button_grid, elem_idx idx) {
+    for (uint32_t i = 0; i < button_grid.cols*button_grid.rows; ++i) {
+        if (button_grid.buttons[i].idx == idx) return i;
+    }
+    return -1;
+}
 /* */
 void free_button_grid(button_grid_t button_grid) {
     free(button_grid.buttons);
@@ -722,7 +784,7 @@ char* rlui_strdup(const char* str) {
     return n_str;
 }
 
-Color __int2color(int32_t color) {
+Color __int2color(uint32_t color) {
     return (Color) {
         .r = (unsigned char)((color >> 24) & 0xFF),
         .g = (unsigned char)((color >> 16) & 0xFF),

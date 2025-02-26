@@ -207,6 +207,7 @@ toggle_t make_toggle_from_toggle(toggle_t toggle, elem_bounds_t bounds, const ch
 /* Style functions */
 uint32_t* get_style(enum Elements elem, int* size);
 uint32_t get_style_value(enum Elements elem, enum ElemAttr attr);
+void get_style_colors(enum ElemState state, uint32_t* style, Color* border, Color* base, Color* text);
 
 /* Attributes changing functions */
 void set_button_style(button_t* button, enum ElemAttr attr, uint32_t value);
@@ -230,6 +231,8 @@ void render_toggle(toggle_t* toggle);
 Vector2 __get_elem_with_border_pos(elem_bounds_t bounds, uint32_t border_width);
 Vector2 __get_elem_with_border_dims(elem_bounds_t bounds, uint32_t border_width);
 Vector2 __get_elem_text_pos(elem_bounds_t bounds, Font font, const char* text);
+Vector2 __get_text_pos_align(elem_bounds_t bounds, uint32_t left_padding, uint32_t right_padding, 
+                             enum TextAlignment text_align, Font font, float font_size, const char* text);
 
 /* Functions for getting elements states */
 elem_state_t get_button_state(button_t button, bool* active);
@@ -495,6 +498,33 @@ uint32_t get_style_value(enum Elements elem, enum ElemAttr attr) {
     }
     return __style.elem_styles[elem][attr];
 }
+
+void get_style_colors(enum ElemState state, uint32_t* style, Color* border, Color* base, Color* text) {
+    switch (state) {
+        case NORMAL:
+            if (border != NULL) *border = __int2color(style[ATTR_BORDER_COLOR_NORMAL]);
+            if (base != NULL) *base = __int2color(style[ATTR_BASE_COLOR_NORMAL]);
+            if (text != NULL) *text = __int2color(style[ATTR_TEXT_COLOR_NORMAL]);
+            __rlui_error = 0;
+            break;
+        case FOCUSED:
+            if (border != NULL) *border = __int2color(style[ATTR_BORDER_COLOR_FOCUSED]);
+            if (base != NULL) *base = __int2color(style[ATTR_BASE_COLOR_FOCUSED]);
+            if (text != NULL) *text = __int2color(style[ATTR_TEXT_COLOR_FOCUSED]);
+            __rlui_error = 0;
+            break;
+        case CLICKED:
+            if (border != NULL) *border = __int2color(style[ATTR_BORDER_COLOR_CLICKED]);
+            if (base != NULL) *base = __int2color(style[ATTR_BASE_COLOR_CLICKED]);
+            if (text != NULL) *text = __int2color(style[ATTR_TEXT_COLOR_CLICKED]);
+            __rlui_error = 0;
+            break;
+        default:
+            __rlui_error = 1;
+            break;
+    }
+}
+
 /* Function to change attributes of button */
 void set_button_style(button_t* button, enum ElemAttr attr, uint32_t value) {
     button->style[attr] = value;
@@ -585,19 +615,7 @@ void render_button(button_t* button) {
         __get_elem_with_border_dims(button->bounds, button->style[ATTR_BORDER_WIDTH]),
     };
     Vector2 text_pos = __get_elem_text_pos(button->bounds, button->font, button->text);
-    if (button->state == NORMAL) {
-        border_color = __int2color(button->style[ATTR_BORDER_COLOR_NORMAL]);
-        base_color = __int2color(button->style[ATTR_BASE_COLOR_NORMAL]);
-        text_color = __int2color(button->style[ATTR_TEXT_COLOR_NORMAL]);
-    } else if (button->state == FOCUSED) {
-        border_color = __int2color(button->style[ATTR_BORDER_COLOR_FOCUSED]);
-        base_color = __int2color(button->style[ATTR_BASE_COLOR_FOCUSED]);
-        text_color = __int2color(button->style[ATTR_TEXT_COLOR_FOCUSED]);
-    } else if (button->state == CLICKED) {
-        border_color = __int2color(button->style[ATTR_BORDER_COLOR_CLICKED]);
-        base_color = __int2color(button->style[ATTR_BASE_COLOR_CLICKED]);
-        text_color = __int2color(button->style[ATTR_TEXT_COLOR_CLICKED]);
-    }
+    get_style_colors(button->state, button->style, &border_color, &base_color, &text_color);
     /* Drawing */
     DrawRectangle(button->bounds.x, button->bounds.y, button->bounds.width, button->bounds.height, border_color);
     DrawRectangleV(border_bounds[0], border_bounds[1], base_color);
@@ -626,25 +644,9 @@ void render_button_grid(button_grid_t* buttons) {
 
 /* Function to render a titlebar */
 void render_titlebar(titlebar_t titlebar) {
-    Vector2 text_pos = {0};
-    Vector2 text_dims = MeasureTextEx(titlebar.font, titlebar.text, titlebar.font_size, 0);
-    /* Calculates the distance from the sides */
-    switch (titlebar.style[ATTR_TEXT_ALIGNMENT]) {
-        case ALIGN_LEFT:
-            text_pos.x = (float)(titlebar.bounds.x+titlebar.style[ATTR_LEFT_PADDING]);
-            text_pos.y = (float)(titlebar.bounds.y+((titlebar.bounds.height-text_dims.y)/2.0f));
-            break;
-        case ALIGN_CENTER:
-            text_pos.x = (float)(titlebar.bounds.x+((titlebar.bounds.width-text_dims.x)/2.0f));
-            text_pos.y = (float)(titlebar.bounds.y+((titlebar.bounds.height-text_dims.y)/2.0f));
-            break;
-        case ALIGN_RIGHT:
-            text_pos.x = (float)(titlebar.bounds.width-text_dims.x-titlebar.style[ATTR_RIGHT_PADDING]);
-            text_pos.y = (float)(titlebar.bounds.y+((titlebar.bounds.height-text_dims.y)/2.0f));
-            break;
-        default:
-            break;
-    }
+    Vector2 text_pos = __get_text_pos_align(titlebar.bounds, titlebar.style[ATTR_LEFT_PADDING], titlebar.style[ATTR_RIGHT_PADDING], 
+                                            (enum TextAlignment)titlebar.style[ATTR_TEXT_ALIGNMENT], titlebar.font, titlebar.font_size, 
+                                            titlebar.text);
     int64_t left_border_width = titlebar.style[ATTR_TITLEBAR_LEFT_BORDER_WIDTH];
     int64_t right_border_width = titlebar.style[ATTR_TITLEBAR_RIGHT_BORDER_WIDTH];
     int64_t top_border_width = titlebar.style[ATTR_TITLEBAR_TOP_BORDER_WIDTH];
@@ -683,19 +685,7 @@ void render_toggle(toggle_t* toggle) {
         __get_elem_with_border_dims(toggle->bounds, toggle->style[ATTR_BORDER_WIDTH]),
     };
     Vector2 text_pos = __get_elem_text_pos(toggle->bounds, toggle->font, toggle->text);
-    if (toggle->state == NORMAL) {
-        border_color = __int2color(toggle->style[ATTR_BORDER_COLOR_NORMAL]);
-        base_color = __int2color(toggle->style[ATTR_BASE_COLOR_NORMAL]);
-        text_color = __int2color(toggle->style[ATTR_TEXT_COLOR_NORMAL]);
-    } else if (toggle->state == FOCUSED) {
-        border_color = __int2color(toggle->style[ATTR_BORDER_COLOR_FOCUSED]);
-        base_color = __int2color(toggle->style[ATTR_BASE_COLOR_FOCUSED]);
-        text_color = __int2color(toggle->style[ATTR_TEXT_COLOR_FOCUSED]);
-    } else if (toggle->state == CLICKED) {
-        border_color = __int2color(toggle->style[ATTR_BORDER_COLOR_CLICKED]);
-        base_color = __int2color(toggle->style[ATTR_BASE_COLOR_CLICKED]);
-        text_color = __int2color(toggle->style[ATTR_TEXT_COLOR_CLICKED]);
-    }
+    get_style_colors(toggle->state, toggle->style, &border_color, &base_color, &text_color);
     /* Drawing */
     DrawRectangle(toggle->bounds.x, toggle->bounds.y, toggle->bounds.width, toggle->bounds.height, border_color);
     DrawRectangleV(border_bounds[0], border_bounds[1], base_color);
@@ -726,6 +716,32 @@ Vector2 __get_elem_text_pos(elem_bounds_t bounds, Font font, const char* text) {
     Vector2 text_pos = {0};
     text_pos.x = bounds.x+((float)(bounds.width-(float)MeasureTextEx(font, text, font.baseSize, 0).x)/2.0f);
     text_pos.y = bounds.y+((float)(bounds.height-(float)MeasureTextEx(font, text, font.baseSize, 0).y)/2.0f);
+    __rlui_error = 0;
+    return text_pos;
+}
+
+Vector2 __get_text_pos_align(elem_bounds_t bounds, uint32_t left_padding, uint32_t right_padding, 
+                             enum TextAlignment text_align, Font font, float font_size, const char* text) {
+    Vector2 text_pos = {0};
+    Vector2 text_dims = MeasureTextEx(font, text, font_size, 0);
+    /* Calculates the distance from the sides */
+    switch (text_align) {
+        case ALIGN_LEFT:
+            text_pos.x = (float)(bounds.x+left_padding);
+            text_pos.y = (float)(bounds.y+((bounds.height-text_dims.y)/2.0f));
+            break;
+        case ALIGN_CENTER:
+            text_pos.x = (float)(bounds.x+((bounds.width-text_dims.x)/2.0f));
+            text_pos.y = (float)(bounds.y+((bounds.height-text_dims.y)/2.0f));
+            break;
+        case ALIGN_RIGHT:
+            text_pos.x = (float)(bounds.width-text_dims.x-right_padding);
+            text_pos.y = (float)(bounds.y+((bounds.height-text_dims.y)/2.0f));
+            break;
+        default:
+            __rlui_error = 1;
+            break;
+    }
     __rlui_error = 0;
     return text_pos;
 }
@@ -819,5 +835,6 @@ Color __int2color(uint32_t color) {
     };
     __rlui_error = 0;
 }
+
 #endif /* RLUI_ELEMS_IMPLEMENTATION */
 #endif /* RLUI_ELEMS_H_ */

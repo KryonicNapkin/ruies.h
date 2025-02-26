@@ -170,7 +170,7 @@ typedef enum ElemState       elem_state_t;
  * 
 */
 /* custom variable that stores current error */
-int rlui_error;
+int __rlui_error;
 
 /* variable to keep track of current element id */
 int __current_elem_idx;
@@ -255,7 +255,7 @@ Color __int2color(uint32_t color);
 #include <string.h>
 
 /* custom variable that stores current error */
-int rlui_error = 0;
+int __rlui_error = 0;
 
 int __current_elem_idx = 0;
 
@@ -312,7 +312,7 @@ struct GlobalStyle __style = {
         } else { 
             __style.fontloader[elem] = fontloader;
         }
-        rlui_error = 0;
+        __rlui_error = 0;
     }
 
     void set_elem_font_size(enum Elements elem, float font_size) {
@@ -323,12 +323,12 @@ struct GlobalStyle __style = {
         } else { 
             __style.font_sizes[elem] = font_size;
         }
-        rlui_error = 0;
+        __rlui_error = 0;
     }
 #endif /* USE_CUSTOM_FONT */
 
 int check_rlui_error(void) {
-    return rlui_error;
+    return __rlui_error;
 }
 
 /* Function for creation of a button */
@@ -342,7 +342,7 @@ button_t make_button(elem_bounds_t bounds, const char* text) {
     if (text != NULL) {
         btn.text = rlui_strdup(text);
     } else {
-        rlui_error = 1;
+        __rlui_error = 1;
         return btn;
     }
 
@@ -351,7 +351,7 @@ button_t make_button(elem_bounds_t bounds, const char* text) {
     btn.font_size = __style.font_sizes[BUTTON];
     btn.state = NORMAL;
     __current_elem_idx += 1;
-    rlui_error = 0;
+    __rlui_error = 0;
     return btn;
 }
 
@@ -365,7 +365,7 @@ titlebar_t make_titlebar(elem_bounds_t bounds, const char* text) {
     if (text != NULL) {
         titlebar.text = rlui_strdup(text);
     } else {
-        rlui_error = 1;
+        __rlui_error = 1;
         return titlebar;
     }
 
@@ -373,7 +373,7 @@ titlebar_t make_titlebar(elem_bounds_t bounds, const char* text) {
     titlebar.font = __style.fontloader[TITLEBAR]();
     titlebar.font_size = __style.font_sizes[TITLEBAR];
     __current_elem_idx += 1;
-    rlui_error = 0;
+    __rlui_error = 0;
     return titlebar;
 }
 
@@ -391,7 +391,7 @@ button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint
     /* Checks if the number of texts is equal to the number of desired buttons to be created */
     if (text == NULL || count != num_of_buttons || text[num_of_buttons] != NULL) {
         free(button_grid.buttons);
-        rlui_error = 1;
+        __rlui_error = 1;
         return button_grid;
     }
 
@@ -430,7 +430,7 @@ button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint
     button_grid.vertical_spacing = vertical_spacing;
     button_grid.rows = rows;
     button_grid.cols = cols;
-    rlui_error = 0;
+    __rlui_error = 0;
     return button_grid;
 }
 
@@ -442,7 +442,7 @@ toggle_t make_toggle(elem_bounds_t bounds, const char* text) {
     if (text != NULL) {
         toggle.text = rlui_strdup(text);
     } else {
-        rlui_error = 1;
+        __rlui_error = 1;
         return toggle;
     }
 
@@ -451,7 +451,7 @@ toggle_t make_toggle(elem_bounds_t bounds, const char* text) {
     toggle.font_size = __style.font_sizes[TOGGLE];
     toggle.state = NORMAL;
     __current_elem_idx += 1;
-    rlui_error = 0;
+    __rlui_error = 0;
     return toggle;
 }
 
@@ -462,7 +462,7 @@ button_t make_button_from_button(button_t button, elem_bounds_t bounds, const ch
     new_button.text = rlui_strdup(text);
     new_button.idx = button.idx + 1;
     __current_elem_idx += 1;
-    rlui_error = 0;
+    __rlui_error = 0;
     return new_button;
 }
 
@@ -473,24 +473,24 @@ toggle_t make_toggle_from_toggle(toggle_t toggle, elem_bounds_t bounds, const ch
     new_toggle.text = rlui_strdup(text);
     new_toggle.idx = toggle.idx + 1;
     __current_elem_idx += 1;
-    rlui_error = 0;
+    __rlui_error = 0;
     return new_toggle;
 }
 
 uint32_t* get_style(enum Elements elem, int* size) {
     if (elem == ALL_ELEMENTS) {
         if (size != NULL) *size = 0;
-        rlui_error = 1;
+        __rlui_error = 1;
         return NULL;
     }
     *size = sizeof(__style.elem_styles[elem])/sizeof(__style.elem_styles[elem][0]);
-    rlui_error = 0;
+    __rlui_error = 0;
     return __style.elem_styles[elem];
 }
 
 uint32_t get_style_value(enum Elements elem, enum ElemAttr attr) {
     if (elem == ALL_ELEMENTS) {
-        rlui_error = 1;
+        __rlui_error = 1;
         return 0;
     }
     return __style.elem_styles[elem][attr];
@@ -498,13 +498,13 @@ uint32_t get_style_value(enum Elements elem, enum ElemAttr attr) {
 /* Function to change attributes of button */
 void set_button_style(button_t* button, enum ElemAttr attr, uint32_t value) {
     button->style[attr] = value;
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Function to change attributes of the titlebar */
 void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, uint32_t value) {
     titlebar->style[attr] = value;
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Function to change the attribute of every button in a button grid */
@@ -512,12 +512,12 @@ void button_grid_attr(button_grid_t* button_grid, enum ElemAttr attr, uint32_t v
     for (int i = 0; i < (button_grid->rows*button_grid->cols); ++i) {
         set_button_style(&button_grid->buttons[i], attr, value);
     }
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 void set_toggle_style(toggle_t* toggle, enum ElemAttr attr, uint32_t value) {
     toggle->style[attr] = value;
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 void set_allstyle(enum Elements elem, enum ElemAttr attr, uint32_t value) {
@@ -528,7 +528,7 @@ void set_allstyle(enum Elements elem, enum ElemAttr attr, uint32_t value) {
     } else {
         __style.elem_styles[elem][attr] = value;
     }
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Function to adjuct positions and dimensions of every button in button array so that they will stretch horizotaly to the until_x value 
@@ -548,7 +548,7 @@ void stretch_button_grid_horiz(button_grid_t* button_grid, uint32_t horizontal_s
         button_grid->buttons[i].bounds.width = new_button_width;
     }
     button_grid->horizontal_spacing = horizontal_spacing;
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Function to adjuct positions and dimensions of every button in button array so that they will stretch vertiacaly to the until_y value 
@@ -571,7 +571,7 @@ void stretch_button_grid_verti(button_grid_t* button_grid, uint32_t vertical_spa
         button_grid->buttons[i].bounds.height = new_button_height;
     }
     button_grid->vertical_spacing = vertical_spacing;
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Function for rendering a button */
@@ -602,7 +602,7 @@ void render_button(button_t* button) {
     DrawRectangle(button->bounds.x, button->bounds.y, button->bounds.width, button->bounds.height, border_color);
     DrawRectangleV(border_bounds[0], border_bounds[1], base_color);
     DrawTextEx(button->font, button->text, text_pos, button->font_size, 0, text_color);
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Function to render a variadic number of buttons */
@@ -613,7 +613,7 @@ void vrender_button(int count, ...) {
         render_button(va_arg(ap, button_t*));
     }
     va_end(ap);
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Function to render a button array */
@@ -621,7 +621,7 @@ void render_button_grid(button_grid_t* buttons) {
     for (int i = 0; i < (buttons->cols*buttons->rows); ++i) {
         render_button(&buttons->buttons[i]);
     }
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Function to render a titlebar */
@@ -670,7 +670,7 @@ void render_titlebar(titlebar_t titlebar) {
                       bottom_border_width, border_color_normal);
     }
     DrawTextEx(titlebar.font, titlebar.text, text_pos, titlebar.font_size, 0, __int2color(titlebar.style[ATTR_TEXT_COLOR_NORMAL]));
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 void render_toggle(toggle_t* toggle) {
@@ -700,7 +700,7 @@ void render_toggle(toggle_t* toggle) {
     DrawRectangle(toggle->bounds.x, toggle->bounds.y, toggle->bounds.width, toggle->bounds.height, border_color);
     DrawRectangleV(border_bounds[0], border_bounds[1], base_color);
     DrawTextEx(toggle->font, toggle->text, text_pos, toggle->font_size, 0, text_color);
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Internal function to calculate the position of the boundsagle relative to border width */
@@ -708,7 +708,7 @@ Vector2 __get_elem_with_border_pos(elem_bounds_t bounds, uint32_t border_width) 
     Vector2 border_pos = {0};
     border_pos.x = bounds.x+border_width;
     border_pos.y = bounds.y+border_width;
-    rlui_error = 0;
+    __rlui_error = 0;
     return border_pos;
 }
 
@@ -717,7 +717,7 @@ Vector2 __get_elem_with_border_dims(elem_bounds_t bounds, uint32_t border_width)
     Vector2 border_dims = {0};
     border_dims.x = bounds.width-(2*border_width);
     border_dims.y = bounds.height-(2*border_width);
-    rlui_error = 0;
+    __rlui_error = 0;
     return border_dims;
 }
 
@@ -726,21 +726,21 @@ Vector2 __get_elem_text_pos(elem_bounds_t bounds, Font font, const char* text) {
     Vector2 text_pos = {0};
     text_pos.x = bounds.x+((float)(bounds.width-(float)MeasureTextEx(font, text, font.baseSize, 0).x)/2.0f);
     text_pos.y = bounds.y+((float)(bounds.height-(float)MeasureTextEx(font, text, font.baseSize, 0).y)/2.0f);
-    rlui_error = 0;
+    __rlui_error = 0;
     return text_pos;
 }
 
 elem_state_t get_button_state(button_t button, bool* active) {
     if (button.state == CLICKED) *active = true;
     else *active = false;
-    rlui_error = 0;
+    __rlui_error = 0;
     return button.state;
 }
 
 elem_state_t get_toggle_state(toggle_t toggle, bool* active) {
     if (toggle.state == CLICKED) *active = true;
     else *active = false;
-    rlui_error = 0;
+    __rlui_error = 0;
     return toggle.state;
 }
 /* Functions for changing element states */
@@ -760,7 +760,7 @@ void __detect_button_state_change(button_t* button) {
     } else if (hover && clicked) {
         button->state = CLICKED;
     }
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 void __detect_toggle_state_change(toggle_t* toggle) {
@@ -781,23 +781,23 @@ void __detect_toggle_state_change(toggle_t* toggle) {
     } else if (hover && clicked && toggle->state == CLICKED) {
         toggle->state = NORMAL;
     }
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 int get_button_index_in_grid_by_its_idx(button_grid_t button_grid, elem_idx idx) {
     for (uint32_t i = 0; i < button_grid.cols*button_grid.rows; ++i) {
         if (button_grid.buttons[i].idx == idx) {
-            rlui_error = 0;
+            __rlui_error = 0;
             return i;
         } 
     }
-    rlui_error = 1;
+    __rlui_error = 1;
     return -1;
 }
 /* */
 void free_button_grid(button_grid_t button_grid) {
     free(button_grid.buttons);
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 
 /* Custom strdup function */
@@ -817,7 +817,7 @@ Color __int2color(uint32_t color) {
         .b = (unsigned char)((color >> 8) & 0xFF),
         .a = (unsigned char)(color & 0xFF),
     };
-    rlui_error = 0;
+    __rlui_error = 0;
 }
 #endif /* RLUI_ELEMS_IMPLEMENTATION */
 #endif /* RLUI_ELEMS_H_ */

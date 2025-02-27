@@ -5,8 +5,9 @@
  *     Created by: KryonicNapkin        - https://www.github.com/KryonicNapkin/rlui_elems
  *     Credit: raysan5's raygui library - https://www.github.com/raysan5/raygui
  */
+/*  TODO: make more ui elements like (CheckBox, OptionList) */
 
-/*  TODO: make more ui elements like (CheckBox, OptionList, Label) */
+/* ELEMENTS include: Button, Button grid, Titlebar, Toggle, Label */
 
 #ifndef RLUI_ELEMS_H_
 #define RLUI_ELEMS_H_
@@ -31,6 +32,7 @@ enum Elements {
     BUTTON_GRID,
     TITLEBAR,
     TOGGLE,
+    LABEL,
     ALL_ELEMENTS,
 };
 
@@ -46,7 +48,14 @@ enum TextAlignment {
     ALIGN_RIGHT,
 };
 
-#define MAX_ELEMENTS_COUNT     4
+enum ElemAttachment {
+    LEFT_SIDE = 0,
+    ON_TOP,
+    RIGHT_SIDE,
+    TO_BOTTOM
+};
+
+#define MAX_ELEMENTS_COUNT     5
 #define MAX_ELEMENT_ATTRIBUTES 19
 struct GlobalStyle {
     uint32_t elem_styles[MAX_ELEMENTS_COUNT][MAX_ELEMENT_ATTRIBUTES];
@@ -131,6 +140,17 @@ struct Toggle {
     enum ElemState state;
 };
 
+struct Label {
+    elem_idx idx;
+    elem_bounds_t bounds;
+    char* text;
+    Font font;
+    float font_size;
+    uint32_t style[MAX_ELEMENT_ATTRIBUTES];
+    bool is_attached;
+    enum ElemAttachment attach_to;
+};
+
 /*------------------------------------------------------------*/
 /*----------------------    TYPEDEFS    ----------------------*/
 /*------------------------------------------------------------*/
@@ -139,9 +159,11 @@ typedef struct Button        button_t;
 typedef struct ButtonGrid    button_grid_t;
 typedef struct TitleBar      titlebar_t;
 typedef struct Toggle        toggle_t;
+typedef struct Label         label_t;
 typedef enum TextAlignment   text_align_t;
 typedef enum ElemAttr        elem_attr_t; 
 typedef enum ElemState       elem_state_t; 
+typedef enum ElemAttachment  elem_attach_t;
 
 /* Default values for the global style */
 #define BORDER_COLOR_NORMAL  0x282C34FF
@@ -155,7 +177,7 @@ typedef enum ElemState       elem_state_t;
 #define TEXT_COLOR_CLICKED   0x282C34FF 
 
 #define NO_COLOR_VALUE       0x00000000
-#define UNDEFINED_COLOR(hex) (!((hex) | NO_COLOR_VALUE) ? 1 : 0)     
+#define UNDEFINED_COLOR(hex) (!(hex) ? 1 : 0)     
 
 #define __BORDER_WIDTH       1
 
@@ -199,10 +221,14 @@ button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint
                                elem_bounds_t sample_bounds, const char* text[],
                                uint32_t horizontal_spacing, uint32_t vertical_spacing);
 toggle_t make_toggle(elem_bounds_t bounds, const char* text);
+label_t make_label(elem_bounds_t bounds, const char* text, uint32_t left_padding, uint32_t right_padding);
 
 /* Additional ways of creating elements */
 button_t make_button_from_button(button_t button, elem_bounds_t bounds, const char* text);
 toggle_t make_toggle_from_toggle(toggle_t toggle, elem_bounds_t bounds, const char* text);
+
+/* Label releated functions */
+void attach_label_to_elem(const void* elem, enum Elements type, label_t* label, enum ElemAttachment attach_to);
 
 /* Style functions */
 uint32_t* get_style(enum Elements elem, int* size);
@@ -214,6 +240,7 @@ void set_button_style(button_t* button, enum ElemAttr attr, uint32_t value);
 void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, uint32_t value);
 void button_grid_attr(button_grid_t* grid, enum ElemAttr attr, uint32_t value);
 void set_toggle_style(toggle_t* toggle, enum ElemAttr attr, uint32_t value);
+void set_label_style(label_t* label, enum ElemAttr attr, uint32_t value);
 void set_allstyle(enum Elements elem, enum ElemAttr attr, uint32_t value);
 
 /* ButtonGrid alignment functions */
@@ -226,6 +253,7 @@ void vrender_button(int count, ...);
 void render_button_grid(button_grid_t* buttons);
 void render_titlebar(titlebar_t titlebar);
 void render_toggle(toggle_t* toggle);
+void render_label(label_t* label);
 
 /* Internal functions for rendering */
 Vector2 __get_elem_with_border_pos(elem_bounds_t bounds, uint32_t border_width);
@@ -297,9 +325,17 @@ struct GlobalStyle __style = {
             __BORDER_WIDTH, ALIGN_CENTER, 
             0, 0, 0, 0,      0, 0, 0, 0
         },
+        /* LABEL */
+        { 
+            NO_COLOR_VALUE, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL,           // state: normal
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: focused
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: clicked
+            0, ALIGN_LEFT, 
+            10, 0, 0, 0,      0, 0, 0, 0
+        },
     }, 
-    .fontloader = {DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER},
-    .font_sizes = {__FONT_SIZE, __FONT_SIZE, __FONT_SIZE, __FONT_SIZE},
+    .fontloader = {DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER},
+    .font_sizes = {__FONT_SIZE, __FONT_SIZE, __FONT_SIZE, __FONT_SIZE, __FONT_SIZE},
 };
 
 /* NOTE: fontloader function should be generated using raylib's ExportFontAsCode() function
@@ -458,6 +494,28 @@ toggle_t make_toggle(elem_bounds_t bounds, const char* text) {
     return toggle;
 }
 
+label_t make_label(elem_bounds_t bounds, const char* text, uint32_t left_padding, uint32_t right_padding) {
+    label_t label = {0};
+    label.idx = (!__current_elem_idx ? 0 : __current_elem_idx+1);
+    label.bounds = bounds;
+
+    if (text != NULL) {
+        label.text = rlui_strdup(text);
+    } else {
+        __rlui_error = 1;
+        return label;
+    }
+
+    memcpy(&label.style, &__style.elem_styles[LABEL], sizeof(uint32_t)*MAX_ELEMENT_ATTRIBUTES);
+    label.style[ATTR_LEFT_PADDING] = left_padding;
+    label.style[ATTR_RIGHT_PADDING] = right_padding;
+    label.font = __style.fontloader[LABEL]();
+    label.font_size = __style.font_sizes[LABEL];
+    __current_elem_idx += 1;
+    __rlui_error = 0;
+    return label;
+}
+
 button_t make_button_from_button(button_t button, elem_bounds_t bounds, const char* text) {
     button_t new_button;
     memcpy(&new_button, &button, sizeof(button_t));
@@ -478,6 +536,50 @@ toggle_t make_toggle_from_toggle(toggle_t toggle, elem_bounds_t bounds, const ch
     __current_elem_idx += 1;
     __rlui_error = 0;
     return new_toggle;
+}
+/* Label releated functions */
+void attach_label_to_elem(const void* elem, enum Elements type, label_t* label, enum ElemAttachment attach_to) {
+    elem_bounds_t new_bounds = {0};
+    elem_bounds_t elem_bounds;
+    switch (type) {
+        case BUTTON:
+            elem_bounds = (*(button_t*)elem).bounds;
+            break;
+        case TOGGLE:
+            elem_bounds = (*(toggle_t*)elem).bounds;
+            break;
+        case TITLEBAR:
+            elem_bounds = (*(titlebar_t*)elem).bounds;
+            break;
+        case LABEL:
+            elem_bounds = (*(label_t*)elem).bounds;
+            break;
+        default:
+            __rlui_error = 1;
+            break;
+    }
+    switch (attach_to) {
+        case LEFT_SIDE:
+            label->bounds.x = elem_bounds.x-label->bounds.width;
+            label->bounds.y = elem_bounds.y;
+            break;
+        case ON_TOP:
+            label->bounds.x = elem_bounds.x;
+            label->bounds.y = elem_bounds.y-label->bounds.height;
+            break;
+        case RIGHT_SIDE:
+            label->bounds.x = elem_bounds.x+elem_bounds.width;
+            label->bounds.y = elem_bounds.y;
+            break;
+        case TO_BOTTOM:
+            label->bounds.x = elem_bounds.x;
+            label->bounds.y = elem_bounds.y+elem_bounds.height;
+            break;
+        default:
+            __rlui_error = 1;
+            break;
+    }
+    label->is_attached = true;
 }
 
 uint32_t* get_style(enum Elements elem, int* size) {
@@ -527,27 +629,49 @@ void get_style_colors(enum ElemState state, uint32_t* style, Color* border, Colo
 
 /* Function to change attributes of button */
 void set_button_style(button_t* button, enum ElemAttr attr, uint32_t value) {
-    button->style[attr] = value;
-    __rlui_error = 0;
+    if (UNDEFINED_COLOR(button->style[attr])) {
+        __rlui_error = 1;
+    } else {
+        button->style[attr] = value;
+        __rlui_error = 0;
+    }
 }
 
 /* Function to change attributes of the titlebar */
 void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, uint32_t value) {
-    titlebar->style[attr] = value;
-    __rlui_error = 0;
+    if (UNDEFINED_COLOR(titlebar->style[attr])) {
+        __rlui_error = 1;
+    } else {
+        titlebar->style[attr] = value;
+        __rlui_error = 0;
+    }
 }
 
 /* Function to change the attribute of every button in a button grid */
 void button_grid_attr(button_grid_t* button_grid, enum ElemAttr attr, uint32_t value) {
     for (int i = 0; i < (button_grid->rows*button_grid->cols); ++i) {
         set_button_style(&button_grid->buttons[i], attr, value);
+        if (check_rlui_error()) break;
+        else __rlui_error = 0;
     }
-    __rlui_error = 0;
 }
 
 void set_toggle_style(toggle_t* toggle, enum ElemAttr attr, uint32_t value) {
-    toggle->style[attr] = value;
-    __rlui_error = 0;
+    if (UNDEFINED_COLOR(toggle->style[attr])) {
+        __rlui_error = 1;
+    } else {
+        toggle->style[attr] = value;
+        __rlui_error = 0;
+    }
+}
+
+void set_label_style(label_t* label, enum ElemAttr attr, uint32_t value) {
+    if (UNDEFINED_COLOR(label->style[attr])) {
+        __rlui_error = 1;
+    } else {
+        label->style[attr] = value;
+        __rlui_error = 0;
+    }
 }
 
 void set_allstyle(enum Elements elem, enum ElemAttr attr, uint32_t value) {
@@ -693,6 +817,17 @@ void render_toggle(toggle_t* toggle) {
     __rlui_error = 0;
 }
 
+void render_label(label_t* label) {
+    Vector2 text_pos = __get_text_pos_align(label->bounds, label->style[ATTR_LEFT_PADDING], 
+                                            label->style[ATTR_RIGHT_PADDING], (enum TextAlignment)label->style[ATTR_TEXT_ALIGNMENT],
+                                            label->font, label->font_size, label->text);
+    Color base_color = __int2color(label->style[ATTR_BASE_COLOR_NORMAL]);
+    Color text_color = __int2color(label->style[ATTR_TEXT_COLOR_NORMAL]);
+    /* Drawing */
+    DrawRectangle(label->bounds.x, label->bounds.y, label->bounds.width, label->bounds.height, base_color);
+    DrawTextEx(label->font, label->text, text_pos, label->font_size, 0, text_color);
+}
+
 /* Internal function to calculate the position of the boundsagle relative to border width */
 Vector2 __get_elem_with_border_pos(elem_bounds_t bounds, uint32_t border_width) {
     Vector2 border_pos = {0};
@@ -759,6 +894,7 @@ elem_state_t get_toggle_state(toggle_t toggle, bool* active) {
     __rlui_error = 0;
     return toggle.state;
 }
+
 /* Functions for changing element states */
 void __detect_button_state_change(button_t* button) {
     Rectangle bounds = {

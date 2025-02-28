@@ -5,7 +5,8 @@
  *     Created by: KryonicNapkin        - https://www.github.com/KryonicNapkin/rlui_elems
  *     Credit: raysan5's raygui library - https://www.github.com/raysan5/raygui
  */
-/*  TODO: make more ui elements like (CheckBox, OptionList) */
+/* TODO: make more ui elements like (CheckBox, OptionList) */
+/* NOTE: To use this library you NEED to have raylib.h included prior */
 
 /* ELEMENTS include: Button, Button grid, Titlebar, Toggle, Label */
 
@@ -20,19 +21,13 @@
 
 typedef int64_t elem_idx;
 
-typedef struct ElemBounds {
-    int x;
-    int y;
-    int width;
-    int height;
-} elem_bounds_t;
-
 enum Elements {
     BUTTON = 0,
     BUTTON_GRID,
     TITLEBAR,
     TOGGLE,
     LABEL,
+    CELLBOX,
     ALL_ELEMENTS,
 };
 
@@ -41,7 +36,7 @@ enum ElemState {
     FOCUSED,
     CLICKED,
 };
-/* alignment of text */
+/* Text alignment */
 enum TextAlignment {
     ALIGN_LEFT = 0,
     ALIGN_CENTER,
@@ -49,13 +44,20 @@ enum TextAlignment {
 };
 
 enum ElemAttachment {
-    LEFT_SIDE = 0,
+    TO_THE_LEFT = 0,
+    TO_THE_RIGHT,
     ON_TOP,
-    RIGHT_SIDE,
     TO_BOTTOM
 };
 
-#define MAX_ELEMENTS_COUNT     5
+enum CellBoxSides {
+    LEFT_SIDE = 0,
+    RIGHT_SIDE,
+    TOP,
+    BOTTOM,
+};
+
+#define MAX_ELEMENTS_COUNT     6
 #define MAX_ELEMENT_ATTRIBUTES 19
 struct GlobalStyle {
     uint32_t elem_styles[MAX_ELEMENTS_COUNT][MAX_ELEMENT_ATTRIBUTES];
@@ -98,7 +100,7 @@ enum ElemAttr {
 /* Button structure */
 struct Button {
     elem_idx idx;
-    elem_bounds_t bounds;
+    Rectangle bounds;
     char* text;
     Font font;
     float font_size;
@@ -122,7 +124,7 @@ struct ButtonGrid {
 /* Titlebar structure */
 struct TitleBar {
     elem_idx idx;
-    elem_bounds_t bounds;
+    Rectangle bounds;
     char* text;
     Font font;
     float font_size;
@@ -132,7 +134,7 @@ struct TitleBar {
 /* Toggle structure */
 struct Toggle {
     elem_idx idx;
-    elem_bounds_t bounds;
+    Rectangle bounds;
     char* text;
     Font font;
     float font_size;
@@ -142,7 +144,7 @@ struct Toggle {
 
 struct Label {
     elem_idx idx;
-    elem_bounds_t bounds;
+    Rectangle bounds;
     char* text;
     Font font;
     float font_size;
@@ -151,19 +153,36 @@ struct Label {
     enum ElemAttachment attach_to;
 };
 
+struct CellBox {
+    elem_idx idx;
+    Rectangle bounds;
+    uint32_t cell_rows;
+    uint32_t cell_cols;
+    Rectangle* cell_bounds;
+    int* cell_idxs;
+    Color border_color;
+    uint32_t border_width;
+    int number_of_inscribed_elems;
+};
+
 /*------------------------------------------------------------*/
 /*----------------------    TYPEDEFS    ----------------------*/
 /*------------------------------------------------------------*/
 
+/* Elements */
 typedef struct Button        button_t;
 typedef struct ButtonGrid    button_grid_t;
 typedef struct TitleBar      titlebar_t;
 typedef struct Toggle        toggle_t;
 typedef struct Label         label_t;
+typedef struct CellBox       cellbox_t;
+
+/* Elements attributes */
 typedef enum TextAlignment   text_align_t;
 typedef enum ElemAttr        elem_attr_t; 
 typedef enum ElemState       elem_state_t; 
 typedef enum ElemAttachment  elem_attach_t;
+typedef enum CellBoxSides    cellbox_sides_t;
 
 /* Default values for the global style */
 #define BORDER_COLOR_NORMAL  0x282C34FF
@@ -213,19 +232,27 @@ struct GlobalStyle __style;
 int check_rlui_error(void);
 
 /* Element making functions */
-button_t make_button(elem_bounds_t bounds, const char* text);
-titlebar_t make_titlebar(elem_bounds_t bounds, const char* text);
+button_t make_button(Rectangle bounds, const char* text);
+titlebar_t make_titlebar(Rectangle bounds, const char* text);
 /* NOTE: This function allocates memory for the buttons on the heap! 
  * You should call free_button_grid() after CloseWindow() */
 button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint32_t cols,
-                               elem_bounds_t sample_bounds, const char* text[],
+                               Rectangle sample_bounds, const char* text[],
                                uint32_t horizontal_spacing, uint32_t vertical_spacing);
-toggle_t make_toggle(elem_bounds_t bounds, const char* text);
-label_t make_label(elem_bounds_t bounds, const char* text, uint32_t left_padding, uint32_t right_padding);
+toggle_t make_toggle(Rectangle bounds, const char* text);
+label_t make_label(Rectangle bounds, const char* text, uint32_t left_padding, uint32_t right_padding);
+cellbox_t make_cellbox(Rectangle bounds, uint32_t rows, uint32_t cols);
+
+/* Cellbox releated functions */
+void merge_neighbouring_cells(cellbox_t* cellbox, cellbox_sides_t side, int idx1);
+void split_cell_horizontaly(cellbox_t* cellbox, int idx);
+void split_cell_verticaly(cellbox_t* cellbox, int idx);
+void inscribe_elem_into_cell(const void* elem, enum Elements type, cellbox_t* cellbox, int cell_idx);
+/* void inscribe_elem_into_cell_relative_side(const void* elem, enum Elements type, cellbox_t* cellbox, cellbox_sides_t from, int how_much, int vertical_pos); */
 
 /* Additional ways of creating elements */
-button_t make_button_from_button(button_t button, elem_bounds_t bounds, const char* text);
-toggle_t make_toggle_from_toggle(toggle_t toggle, elem_bounds_t bounds, const char* text);
+button_t make_button_from_button(button_t button, Rectangle bounds, const char* text);
+toggle_t make_toggle_from_toggle(toggle_t toggle, Rectangle bounds, const char* text);
 
 /* Label releated functions */
 void attach_label_to_elem(const void* elem, enum Elements type, label_t* label, enum ElemAttachment attach_to);
@@ -241,6 +268,7 @@ void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, uint32_t value
 void button_grid_attr(button_grid_t* grid, enum ElemAttr attr, uint32_t value);
 void set_toggle_style(toggle_t* toggle, enum ElemAttr attr, uint32_t value);
 void set_label_style(label_t* label, enum ElemAttr attr, uint32_t value);
+void set_cellbox_style(cellbox_t* cellbox, enum ElemAttr attr, uint32_t value);
 void set_allstyle(enum Elements elem, enum ElemAttr attr, uint32_t value);
 
 /* ButtonGrid alignment functions */
@@ -256,10 +284,10 @@ void render_toggle(toggle_t* toggle);
 void render_label(label_t* label);
 
 /* Internal functions for rendering */
-Vector2 __get_elem_with_border_pos(elem_bounds_t bounds, uint32_t border_width);
-Vector2 __get_elem_with_border_dims(elem_bounds_t bounds, uint32_t border_width);
-Vector2 __get_elem_text_pos(elem_bounds_t bounds, Font font, const char* text);
-Vector2 __get_text_pos_align(elem_bounds_t bounds, uint32_t left_padding, uint32_t right_padding, 
+Vector2 __get_elem_with_border_pos(Rectangle bounds, uint32_t border_width);
+Vector2 __get_elem_with_border_dims(Rectangle bounds, uint32_t border_width);
+Vector2 __get_elem_text_pos(Rectangle bounds, Font font, const char* text);
+Vector2 __get_text_pos_align(Rectangle bounds, uint32_t left_padding, uint32_t right_padding, 
                              enum TextAlignment text_align, Font font, float font_size, const char* text);
 
 /* Functions for getting elements states */
@@ -274,16 +302,17 @@ int get_button_index_in_grid_by_its_idx(button_grid_t button_grid, elem_idx idx)
 
 /* Memory management functions */
 void free_button_grid(button_grid_t button_grid);
+void free_cellbox(cellbox_t cellbox);
 
 /* Miscellaneous functions */
 char* rlui_strdup(const char* str);
-Color __int2color(uint32_t color);
 
 #ifdef RLUI_ELEMS_IMPLEMENTATION
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 /* custom variable that stores current error */
 int __rlui_error = 0;
@@ -295,47 +324,55 @@ struct GlobalStyle __style = {
     .elem_styles = {
         /* Button */
         {
-            BORDER_COLOR_NORMAL,  BASE_COLOR_NORMAL,   TEXT_COLOR_NORMAL, 
-            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED,  TEXT_COLOR_FOCUSED,
-            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED,  TEXT_COLOR_CLICKED,
+            BORDER_COLOR_NORMAL,  BASE_COLOR_NORMAL,   TEXT_COLOR_NORMAL,  // state: NORMAL  
+            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED,  TEXT_COLOR_FOCUSED, // state: FOCUSED
+            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED,  TEXT_COLOR_CLICKED, // state: CLICKED
             __BORDER_WIDTH, ALIGN_CENTER, 
             0, 0, 0, 0,       0, 0, 0, 0
         }, 
         /* Button Grid */
         { 
-            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL, 
-            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED, TEXT_COLOR_FOCUSED,
-            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED, TEXT_COLOR_CLICKED,
+            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL,     // state: NORMAL  
+            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED, TEXT_COLOR_FOCUSED,  // state: FOCUSED
+            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED, TEXT_COLOR_CLICKED,  // state: CLICKED
             __BORDER_WIDTH, ALIGN_CENTER, 
             0, 0, 0, 0,       0, 0, 0, 0
         }, 
         /* Titlebar */
         { 
-            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL, 
-            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,
-            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,
+            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL,     // state: NORMAL  
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                // state: FOCUSED
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                // state: CLICKED
             __BORDER_WIDTH, ALIGN_LEFT, 
             10, 0, 0, 0,      0, 0, 0, 0
         },
         /* TOGGLE */
         { 
-            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL, 
-            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED, TEXT_COLOR_FOCUSED,
-            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED, TEXT_COLOR_CLICKED,
+            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL,      // state: NORMAL
+            BORDER_COLOR_FOCUSED, BASE_COLOR_FOCUSED, TEXT_COLOR_FOCUSED,   // state: FOCUSED
+            BORDER_COLOR_CLICKED, BASE_COLOR_CLICKED, TEXT_COLOR_CLICKED,   // state: CLICKED
             __BORDER_WIDTH, ALIGN_CENTER, 
             0, 0, 0, 0,      0, 0, 0, 0
         },
         /* LABEL */
         { 
-            NO_COLOR_VALUE, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL,           // state: normal
-            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: focused
-            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: clicked
+            NO_COLOR_VALUE, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL,           // state: NORMAL
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: FOCUSED
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: CLICKED
             0, ALIGN_LEFT, 
             10, 0, 0, 0,      0, 0, 0, 0
         },
+        /* CellBox */
+        { 
+            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, NO_COLOR_VALUE,         // state: NORMAL
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: FOCUSED
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: CLICKED
+            __BORDER_WIDTH, 0, 
+            0, 0, 0, 0,      0, 0, 0, 0
+        },
     }, 
-    .fontloader = {DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER},
-    .font_sizes = {__FONT_SIZE, __FONT_SIZE, __FONT_SIZE, __FONT_SIZE, __FONT_SIZE},
+    .fontloader = {DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER, DEFAULT_FONTLOADER},
+    .font_sizes = {__FONT_SIZE, __FONT_SIZE, __FONT_SIZE, __FONT_SIZE, __FONT_SIZE, __FONT_SIZE},
 };
 
 /* NOTE: fontloader function should be generated using raylib's ExportFontAsCode() function
@@ -371,7 +408,7 @@ int check_rlui_error(void) {
 }
 
 /* Function for creation of a button */
-button_t make_button(elem_bounds_t bounds, const char* text) {
+button_t make_button(Rectangle bounds, const char* text) {
     button_t btn = {0};
     /* Assaign a unique id to a button */
     btn.idx = (!__current_elem_idx ? 0 : __current_elem_idx+1);
@@ -395,7 +432,7 @@ button_t make_button(elem_bounds_t bounds, const char* text) {
 }
 
 /* Function to create a titlebar */
-titlebar_t make_titlebar(elem_bounds_t bounds, const char* text) {
+titlebar_t make_titlebar(Rectangle bounds, const char* text) {
     titlebar_t titlebar = {0};
     /* Assaign an unique id to every created titlebar */
     titlebar.idx = (!__current_elem_idx ? 0 : __current_elem_idx+1);
@@ -416,7 +453,7 @@ titlebar_t make_titlebar(elem_bounds_t bounds, const char* text) {
     return titlebar;
 }
 
-button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint32_t cols, elem_bounds_t sample_bounds, const char* text[], uint32_t horizontal_spacing, uint32_t vertical_spacing) {
+button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint32_t cols, Rectangle sample_bounds, const char* text[], uint32_t horizontal_spacing, uint32_t vertical_spacing) {
     uint32_t num_of_buttons = rows*cols;
     button_grid_t button_grid = {0};
     button_grid.buttons = (struct Button*)malloc(sizeof(button_t) * (rows*cols));
@@ -473,7 +510,7 @@ button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint
     return button_grid;
 }
 
-toggle_t make_toggle(elem_bounds_t bounds, const char* text) {
+toggle_t make_toggle(Rectangle bounds, const char* text) {
     toggle_t toggle = {0};
     toggle.idx = (!__current_elem_idx ? 0 : __current_elem_idx+1);
     toggle.bounds = bounds;
@@ -494,7 +531,7 @@ toggle_t make_toggle(elem_bounds_t bounds, const char* text) {
     return toggle;
 }
 
-label_t make_label(elem_bounds_t bounds, const char* text, uint32_t left_padding, uint32_t right_padding) {
+label_t make_label(Rectangle bounds, const char* text, uint32_t left_padding, uint32_t right_padding) {
     label_t label = {0};
     label.idx = (!__current_elem_idx ? 0 : __current_elem_idx+1);
     label.bounds = bounds;
@@ -516,7 +553,85 @@ label_t make_label(elem_bounds_t bounds, const char* text, uint32_t left_padding
     return label;
 }
 
-button_t make_button_from_button(button_t button, elem_bounds_t bounds, const char* text) {
+cellbox_t make_cellbox(Rectangle bounds, uint32_t rows, uint32_t cols) {
+    cellbox_t cellbox = {0};
+    if (rows == 0 || cols == 0) {
+        __rlui_error = 1;
+        return cellbox;
+    }
+    cellbox.idx = (!__current_elem_idx ? 0 : __current_elem_idx+1);
+    __current_elem_idx += 1;
+    cellbox.bounds = bounds;
+
+    uint32_t size = rows*cols;
+    cellbox.cell_bounds = (Rectangle*)malloc(size * sizeof(Rectangle));
+    cellbox.cell_idxs = (int*)malloc(size * sizeof(int));
+    float horizontal_step = 0.0f;
+    float vertical_step = 0.0f;
+    float horiz_div = (cellbox.bounds.width/(float)cols);
+    float verti_div = (cellbox.bounds.height/(float)rows);
+
+    for (uint32_t i = 0; i < size; ++i) {
+        cellbox.cell_bounds[i].x = cellbox.bounds.x+horizontal_step;
+        cellbox.cell_bounds[i].y = cellbox.bounds.y+vertical_step;
+        cellbox.cell_bounds[i].width = horiz_div;
+        cellbox.cell_bounds[i].height = verti_div;
+        horizontal_step += horiz_div;
+        if ((i+1) % cols == 0) {
+            vertical_step += verti_div;
+            horizontal_step = 0;
+        }
+        cellbox.cell_idxs[i] = i;
+    }
+
+    cellbox.number_of_inscribed_elems = 0;
+    cellbox.border_color = GetColor(__style.elem_styles[CELLBOX][ATTR_BORDER_COLOR_NORMAL]);
+    cellbox.border_width = __style.elem_styles[CELLBOX][ATTR_BORDER_WIDTH];
+    cellbox.cell_cols = cols;
+    cellbox.cell_rows = rows;
+    __rlui_error = 0;
+    return cellbox;
+}
+
+void merge_neighbouring_cells(cellbox_t* cellbox, int idx1, int idx2);
+void split_cell_horizontaly(cellbox_t* cellbox, int idx);
+void split_cell_verticaly(cellbox_t* cellbox, int idx);
+
+void inscribe_elem_into_cell(const void* elem, enum Elements type, cellbox_t* cellbox, int cell_idx) {
+    Rectangle elem_bounds;
+    bool found = false;
+    for (uint32_t i = 0; i < cellbox->cell_cols*cellbox->cell_rows; ++i) {
+        if (cellbox->cell_idxs[i] == cell_idx) {
+            elem_bounds = cellbox->cell_bounds[cell_idx];
+            found = true;
+            break;
+        }
+    }
+    if (!found) __rlui_error = 1;
+    else {
+        switch (type) {
+            case BUTTON:
+                ((button_t*)elem)->bounds = elem_bounds;
+                break;
+            case TOGGLE:
+                ((toggle_t*)elem)->bounds = elem_bounds;
+                break;
+            case TITLEBAR:
+                ((titlebar_t*)elem)->bounds = elem_bounds;
+                break;
+            case LABEL:
+                ((label_t*)elem)->bounds = elem_bounds;
+                break;
+            default:
+                __rlui_error = 1;
+                break;
+        }
+        cellbox->number_of_inscribed_elems++;
+        __rlui_error = 0;
+    }
+}
+
+button_t make_button_from_button(button_t button, Rectangle bounds, const char* text) {
     button_t new_button;
     memcpy(&new_button, &button, sizeof(button_t));
     new_button.bounds = bounds;
@@ -527,7 +642,7 @@ button_t make_button_from_button(button_t button, elem_bounds_t bounds, const ch
     return new_button;
 }
 
-toggle_t make_toggle_from_toggle(toggle_t toggle, elem_bounds_t bounds, const char* text) {
+toggle_t make_toggle_from_toggle(toggle_t toggle, Rectangle bounds, const char* text) {
     toggle_t new_toggle;
     memcpy(&new_toggle, &toggle, sizeof(button_t));
     new_toggle.bounds = bounds;
@@ -539,8 +654,7 @@ toggle_t make_toggle_from_toggle(toggle_t toggle, elem_bounds_t bounds, const ch
 }
 /* Label releated functions */
 void attach_label_to_elem(const void* elem, enum Elements type, label_t* label, enum ElemAttachment attach_to) {
-    elem_bounds_t new_bounds = {0};
-    elem_bounds_t elem_bounds;
+    Rectangle elem_bounds;
     switch (type) {
         case BUTTON:
             elem_bounds = (*(button_t*)elem).bounds;
@@ -559,7 +673,7 @@ void attach_label_to_elem(const void* elem, enum Elements type, label_t* label, 
             break;
     }
     switch (attach_to) {
-        case LEFT_SIDE:
+        case TO_THE_LEFT:
             label->bounds.x = elem_bounds.x-label->bounds.width;
             label->bounds.y = elem_bounds.y;
             break;
@@ -567,7 +681,7 @@ void attach_label_to_elem(const void* elem, enum Elements type, label_t* label, 
             label->bounds.x = elem_bounds.x;
             label->bounds.y = elem_bounds.y-label->bounds.height;
             break;
-        case RIGHT_SIDE:
+        case TO_THE_RIGHT:
             label->bounds.x = elem_bounds.x+elem_bounds.width;
             label->bounds.y = elem_bounds.y;
             break;
@@ -602,29 +716,10 @@ uint32_t get_style_value(enum Elements elem, enum ElemAttr attr) {
 }
 
 void get_style_colors(enum ElemState state, uint32_t* style, Color* border, Color* base, Color* text) {
-    switch (state) {
-        case NORMAL:
-            if (border != NULL) *border = __int2color(style[ATTR_BORDER_COLOR_NORMAL]);
-            if (base != NULL) *base = __int2color(style[ATTR_BASE_COLOR_NORMAL]);
-            if (text != NULL) *text = __int2color(style[ATTR_TEXT_COLOR_NORMAL]);
-            __rlui_error = 0;
-            break;
-        case FOCUSED:
-            if (border != NULL) *border = __int2color(style[ATTR_BORDER_COLOR_FOCUSED]);
-            if (base != NULL) *base = __int2color(style[ATTR_BASE_COLOR_FOCUSED]);
-            if (text != NULL) *text = __int2color(style[ATTR_TEXT_COLOR_FOCUSED]);
-            __rlui_error = 0;
-            break;
-        case CLICKED:
-            if (border != NULL) *border = __int2color(style[ATTR_BORDER_COLOR_CLICKED]);
-            if (base != NULL) *base = __int2color(style[ATTR_BASE_COLOR_CLICKED]);
-            if (text != NULL) *text = __int2color(style[ATTR_TEXT_COLOR_CLICKED]);
-            __rlui_error = 0;
-            break;
-        default:
-            __rlui_error = 1;
-            break;
-    }
+    if (border != NULL) *border = GetColor(style[state*3]);
+    if (base != NULL) *base = GetColor(style[(state*3)+1]);
+    if (text != NULL) *text = GetColor(style[(state*3)+2]);
+    __rlui_error = 0;
 }
 
 /* Function to change attributes of button */
@@ -741,7 +836,7 @@ void render_button(button_t* button) {
     Vector2 text_pos = __get_elem_text_pos(button->bounds, button->font, button->text);
     get_style_colors(button->state, button->style, &border_color, &base_color, &text_color);
     /* Drawing */
-    DrawRectangle(button->bounds.x, button->bounds.y, button->bounds.width, button->bounds.height, border_color);
+    DrawRectangleRec(button->bounds, border_color);
     DrawRectangleV(border_bounds[0], border_bounds[1], base_color);
     DrawTextEx(button->font, button->text, text_pos, button->font_size, 0, text_color);
     __rlui_error = 0;
@@ -776,9 +871,9 @@ void render_titlebar(titlebar_t titlebar) {
     int64_t top_border_width = titlebar.style[ATTR_TITLEBAR_TOP_BORDER_WIDTH];
     int64_t bottom_border_width = titlebar.style[ATTR_TITLEBAR_BOTTOM_BORDER_WIDTH];
 
-    Color border_color_normal = __int2color(titlebar.style[ATTR_BORDER_COLOR_NORMAL]);
+    Color border_color_normal = GetColor(titlebar.style[ATTR_BORDER_COLOR_NORMAL]);
 
-    DrawRectangle(titlebar.bounds.x, titlebar.bounds.y, titlebar.bounds.width, titlebar.bounds.height, __int2color(titlebar.style[ATTR_BASE_COLOR_NORMAL]));
+    DrawRectangleRec(titlebar.bounds, GetColor(titlebar.style[ATTR_BASE_COLOR_NORMAL]));
     if (left_border_width > 0) {
         DrawRectangle(titlebar.bounds.x, titlebar.bounds.y, left_border_width, 
                       titlebar.bounds.height, border_color_normal);
@@ -795,7 +890,7 @@ void render_titlebar(titlebar_t titlebar) {
         DrawRectangle(titlebar.bounds.x, titlebar.bounds.y+(titlebar.bounds.height-bottom_border_width), titlebar.bounds.width, 
                       bottom_border_width, border_color_normal);
     }
-    DrawTextEx(titlebar.font, titlebar.text, text_pos, titlebar.font_size, 0, __int2color(titlebar.style[ATTR_TEXT_COLOR_NORMAL]));
+    DrawTextEx(titlebar.font, titlebar.text, text_pos, titlebar.font_size, 0, GetColor(titlebar.style[ATTR_TEXT_COLOR_NORMAL]));
     __rlui_error = 0;
 }
 
@@ -811,7 +906,7 @@ void render_toggle(toggle_t* toggle) {
     Vector2 text_pos = __get_elem_text_pos(toggle->bounds, toggle->font, toggle->text);
     get_style_colors(toggle->state, toggle->style, &border_color, &base_color, &text_color);
     /* Drawing */
-    DrawRectangle(toggle->bounds.x, toggle->bounds.y, toggle->bounds.width, toggle->bounds.height, border_color);
+    DrawRectangleRec(toggle->bounds, border_color);
     DrawRectangleV(border_bounds[0], border_bounds[1], base_color);
     DrawTextEx(toggle->font, toggle->text, text_pos, toggle->font_size, 0, text_color);
     __rlui_error = 0;
@@ -821,57 +916,57 @@ void render_label(label_t* label) {
     Vector2 text_pos = __get_text_pos_align(label->bounds, label->style[ATTR_LEFT_PADDING], 
                                             label->style[ATTR_RIGHT_PADDING], (enum TextAlignment)label->style[ATTR_TEXT_ALIGNMENT],
                                             label->font, label->font_size, label->text);
-    Color base_color = __int2color(label->style[ATTR_BASE_COLOR_NORMAL]);
-    Color text_color = __int2color(label->style[ATTR_TEXT_COLOR_NORMAL]);
+    Color base_color = GetColor(label->style[ATTR_BASE_COLOR_NORMAL]);
+    Color text_color = GetColor(label->style[ATTR_TEXT_COLOR_NORMAL]);
     /* Drawing */
-    DrawRectangle(label->bounds.x, label->bounds.y, label->bounds.width, label->bounds.height, base_color);
+    DrawRectangleRec(label->bounds, base_color);
     DrawTextEx(label->font, label->text, text_pos, label->font_size, 0, text_color);
 }
 
 /* Internal function to calculate the position of the boundsagle relative to border width */
-Vector2 __get_elem_with_border_pos(elem_bounds_t bounds, uint32_t border_width) {
+Vector2 __get_elem_with_border_pos(Rectangle bounds, uint32_t border_width) {
     Vector2 border_pos = {0};
-    border_pos.x = bounds.x+border_width;
-    border_pos.y = bounds.y+border_width;
+    border_pos.x = bounds.x+(float)border_width;
+    border_pos.y = bounds.y+(float)border_width;
     __rlui_error = 0;
     return border_pos;
 }
 
 /* Internal functin to calculate the dimensions of the boundsagle relative to border width */
-Vector2 __get_elem_with_border_dims(elem_bounds_t bounds, uint32_t border_width) {
+Vector2 __get_elem_with_border_dims(Rectangle bounds, uint32_t border_width) {
     Vector2 border_dims = {0};
-    border_dims.x = bounds.width-(2*border_width);
-    border_dims.y = bounds.height-(2*border_width);
+    border_dims.x = bounds.width-(2.0f*(float)border_width);
+    border_dims.y = bounds.height-(2.0f*(float)border_width);
     __rlui_error = 0;
     return border_dims;
 }
 
 /* Internal function to calculate the text position of a button */
-Vector2 __get_elem_text_pos(elem_bounds_t bounds, Font font, const char* text) {
+Vector2 __get_elem_text_pos(Rectangle bounds, Font font, const char* text) {
     Vector2 text_pos = {0};
-    text_pos.x = bounds.x+((float)(bounds.width-(float)MeasureTextEx(font, text, font.baseSize, 0).x)/2.0f);
-    text_pos.y = bounds.y+((float)(bounds.height-(float)MeasureTextEx(font, text, font.baseSize, 0).y)/2.0f);
+    text_pos.x = bounds.x+((bounds.width-MeasureTextEx(font, text, font.baseSize, 0).x)/2.0f);
+    text_pos.y = bounds.y+((bounds.height-MeasureTextEx(font, text, font.baseSize, 0).y)/2.0f);
     __rlui_error = 0;
     return text_pos;
 }
 
-Vector2 __get_text_pos_align(elem_bounds_t bounds, uint32_t left_padding, uint32_t right_padding, 
+Vector2 __get_text_pos_align(Rectangle bounds, uint32_t left_padding, uint32_t right_padding, 
                              enum TextAlignment text_align, Font font, float font_size, const char* text) {
     Vector2 text_pos = {0};
     Vector2 text_dims = MeasureTextEx(font, text, font_size, 0);
     /* Calculates the distance from the sides */
     switch (text_align) {
         case ALIGN_LEFT:
-            text_pos.x = (float)(bounds.x+left_padding);
-            text_pos.y = (float)(bounds.y+((bounds.height-text_dims.y)/2.0f));
+            text_pos.x = (bounds.x+(float)left_padding);
+            text_pos.y = (bounds.y+((bounds.height-text_dims.y)/2.0f));
             break;
         case ALIGN_CENTER:
-            text_pos.x = (float)(bounds.x+((bounds.width-text_dims.x)/2.0f));
-            text_pos.y = (float)(bounds.y+((bounds.height-text_dims.y)/2.0f));
+            text_pos.x = (bounds.x+((bounds.width-text_dims.x)/2.0f));
+            text_pos.y = (bounds.y+((bounds.height-text_dims.y)/2.0f));
             break;
         case ALIGN_RIGHT:
-            text_pos.x = (float)(bounds.width-text_dims.x-right_padding);
-            text_pos.y = (float)(bounds.y+((bounds.height-text_dims.y)/2.0f));
+            text_pos.x = (bounds.width-text_dims.x-(float)right_padding);
+            text_pos.y = (bounds.y+((bounds.height-text_dims.y)/2.0f));
             break;
         default:
             __rlui_error = 1;
@@ -897,13 +992,7 @@ elem_state_t get_toggle_state(toggle_t toggle, bool* active) {
 
 /* Functions for changing element states */
 void __detect_button_state_change(button_t* button) {
-    Rectangle bounds = {
-        .x = (float)button->bounds.x,
-        .y = (float)button->bounds.y,
-        .width = (float)button->bounds.width,
-        .height = (float)button->bounds.height,
-    };
-    bool hover = CheckCollisionPointRec(GetMousePosition(), bounds);
+    bool hover = CheckCollisionPointRec(GetMousePosition(), button->bounds);
     bool clicked = IsMouseButtonDown(0);
     if (!hover && !clicked) {
         button->state = NORMAL;
@@ -916,13 +1005,7 @@ void __detect_button_state_change(button_t* button) {
 }
 
 void __detect_toggle_state_change(toggle_t* toggle) {
-    Rectangle bounds = {
-        .x = (float)toggle->bounds.x,
-        .y = (float)toggle->bounds.y,
-        .width = (float)toggle->bounds.width,
-        .height = (float)toggle->bounds.height,
-    };
-    bool hover = CheckCollisionPointRec(GetMousePosition(), bounds);
+    bool hover = CheckCollisionPointRec(GetMousePosition(), toggle->bounds);
     bool clicked = IsMouseButtonPressed(0);
     if (!hover && !clicked && toggle->state != CLICKED) {
         toggle->state = NORMAL;
@@ -952,6 +1035,12 @@ void free_button_grid(button_grid_t button_grid) {
     __rlui_error = 0;
 }
 
+void free_cellbox(cellbox_t cellbox) {
+    free(cellbox.cell_idxs);
+    free(cellbox.cell_bounds);
+    __rlui_error = 0;
+}
+
 /* Custom strdup function */
 char* rlui_strdup(const char* str) {
     size_t len = strlen(str) + 1;
@@ -960,16 +1049,6 @@ char* rlui_strdup(const char* str) {
         memcpy(n_str, str, len);
     }
     return n_str;
-}
-
-Color __int2color(uint32_t color) {
-    return (Color) {
-        .r = (unsigned char)((color >> 24) & 0xFF),
-        .g = (unsigned char)((color >> 16) & 0xFF),
-        .b = (unsigned char)((color >> 8) & 0xFF),
-        .a = (unsigned char)(color & 0xFF),
-    };
-    __rlui_error = 0;
 }
 
 #endif /* RLUI_ELEMS_IMPLEMENTATION */

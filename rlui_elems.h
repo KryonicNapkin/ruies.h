@@ -34,8 +34,7 @@
 #ifndef RLUI_ELEMS_H_
 #define RLUI_ELEMS_H_
 
-/* #define USE_CUSTOM_FONT
-#include "raylib.h" */
+#include "raylib.h"
 
 #include <stdint.h>                    /* For type compatibility */
 
@@ -231,104 +230,98 @@ typedef enum CellBoxSides    cellbox_sides_t;
  * 
 */
 /* custom variable that stores current error */
-int __rlui_error;
+extern int __rlui_error;
 
 /* variable to keep track of current element id */
-int __current_elem_idx;
+extern int __current_elem_idx;
 
 /* Default style for the elements */
-struct GlobalStyle __style;
+extern struct GlobalStyle __style;
 
 /*-------------------------------------------------------------*/
 /*-----------------   FUNCTION DECLARATIONS   -----------------*/
 /*-------------------------------------------------------------*/
 
-#ifdef USE_CUSTOM_FONT
-    void set_font_loader_function(enum Elements elem, Font (*fontloader)(void));
-    void set_elem_font_size(enum Elements elem, float font_size);
-#endif /* USE_CUSTOM_FONT */
+extern void set_font_loader_function(enum Elements elem, Font (*fontloader)(void));
+extern void set_elem_font_size(enum Elements elem, float font_size);
 
 /* Error handling functions */
-int check_rlui_error(void);
+extern int check_rlui_error(void);
  
 /* Element making functions */
-button_t make_button(Rectangle bounds, const char* text);
-titlebar_t make_titlebar(Rectangle bounds, const char* text);
+extern button_t make_button(Rectangle bounds, const char* text);
+extern titlebar_t make_titlebar(Rectangle bounds, const char* text);
 /* NOTE: This function allocates memory for the buttons on the heap! 
  * You should call free_button_grid() after CloseWindow() */
-button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint32_t cols,
+extern button_grid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint32_t cols,
                                 Rectangle sample_bounds, const char* text[],
                                 uint32_t horizontal_spacing, uint32_t vertical_spacing);
-toggle_t make_toggle(Rectangle bounds, const char* text);
-label_t make_label(Rectangle bounds, const char* text, uint32_t left_padding, uint32_t right_padding);
-cellbox_t make_cellbox(Rectangle bounds, uint32_t rows, uint32_t cols);
+extern toggle_t make_toggle(Rectangle bounds, const char* text);
+extern label_t make_label(Rectangle bounds, const char* text, uint32_t left_padding, uint32_t right_padding);
+extern cellbox_t make_cellbox(Rectangle bounds, uint32_t rows, uint32_t cols);
  
 /* Cellbox releated functions */
-void merge_neighbouring_cells(cellbox_t* cellbox, cellbox_sides_t side, int idx1);
-void split_cell_horizontaly(cellbox_t* cellbox, int idx);
-void split_cell_verticaly(cellbox_t* cellbox, int idx);
-void inscribe_elem_into_cell(const void* elem, enum Elements type, cellbox_t* cellbox, int cell_idx);
+extern void merge_neighbouring_cells(cellbox_t* cellbox, cellbox_sides_t side, int idx1);
+extern void split_cell_horizontaly(cellbox_t* cellbox, int idx);
+extern void split_cell_verticaly(cellbox_t* cellbox, int idx);
+extern void inscribe_elem_into_cell(const void* elem, enum Elements type, cellbox_t* cellbox, int cell_idx);
 /* void inscribe_elem_into_cell_relative_side(const void* elem, enum Elements type, cellbox_t* cellbox, cellbox_sides_t from, int how_much, int vertical_pos); */
 
 /* Additional ways of creating elements */
-button_t make_button_from_button(button_t button, Rectangle bounds, const char* text);
-toggle_t make_toggle_from_toggle(toggle_t toggle, Rectangle bounds, const char* text);
+extern button_t make_button_from_button(button_t button, Rectangle bounds, const char* text);
+extern toggle_t make_toggle_from_toggle(toggle_t toggle, Rectangle bounds, const char* text);
 
 /* Label releated functions */
-void attach_label_to_elem(const void* elem, enum Elements type, label_t* label, enum ElemAttachment attach_to);
+extern void attach_label_to_elem(const void* elem, enum Elements type, label_t* label, enum ElemAttachment attach_to);
 
 /* Style functions */
-uint32_t* get_style(enum Elements elem, int* size);
-uint32_t get_style_value(enum Elements elem, enum ElemAttr attr);
-void get_style_colors(enum ElemState state, uint32_t* style, Color* border, Color* base, Color* text);
+extern uint32_t* get_style(enum Elements elem, int* size);
+extern uint32_t get_style_value(enum Elements elem, enum ElemAttr attr);
+extern void get_style_colors(enum ElemState state, uint32_t* style, Color* border, Color* base, Color* text);
 
 /* Attributes changing functions */
-void set_button_style(button_t* button, enum ElemAttr attr, uint32_t value);
-void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, uint32_t value);
-void button_grid_attr(button_grid_t* grid, enum ElemAttr attr, uint32_t value);
-void set_toggle_style(toggle_t* toggle, enum ElemAttr attr, uint32_t value);
-void set_label_style(label_t* label, enum ElemAttr attr, uint32_t value);
-void set_cellbox_style(cellbox_t* cellbox, enum ElemAttr attr, uint32_t value);
-void set_allstyle(enum Elements elem, enum ElemAttr attr, uint32_t value);
+extern void set_button_style(button_t* button, enum ElemAttr attr, uint32_t value);
+extern void set_titlebar_style(titlebar_t* titlebar, enum ElemAttr attr, uint32_t value);
+extern void button_grid_attr(button_grid_t* grid, enum ElemAttr attr, uint32_t value);
+extern void set_toggle_style(toggle_t* toggle, enum ElemAttr attr, uint32_t value);
+extern void set_label_style(label_t* label, enum ElemAttr attr, uint32_t value);
+extern void set_cellbox_style(cellbox_t* cellbox, enum ElemAttr attr, uint32_t value);
+extern void set_allstyle(enum Elements elem, enum ElemAttr attr, uint32_t value);
 
 /* ButtonGrid alignment functions */
-void stretch_button_grid_horiz(button_grid_t* button_grid, uint32_t horizontal_spacing, uint32_t until_x);
-void stretch_button_grid_verti(button_grid_t* button_grid, uint32_t vertical_spacing, uint32_t until_y);
+extern void stretch_button_grid_horiz(button_grid_t* button_grid, uint32_t horizontal_spacing, uint32_t until_x);
+extern void stretch_button_grid_verti(button_grid_t* button_grid, uint32_t vertical_spacing, uint32_t until_y);
 
 /* Rendering functions */
-void render_button(button_t* button);
-void vrender_button(int count, ...);
-void render_button_grid(button_grid_t* buttons);
-void render_titlebar(titlebar_t titlebar);
-void render_toggle(toggle_t* toggle);
-void render_label(label_t* label);
+extern void render_button(button_t* button);
+extern void vrender_button(int count, ...);
+extern void render_button_grid(button_grid_t* buttons);
+extern void render_titlebar(titlebar_t titlebar);
+extern void render_toggle(toggle_t* toggle);
+extern void render_label(label_t* label);
 
 /* Internal functions for rendering */
-Vector2 __get_elem_with_border_pos(Rectangle bounds, uint32_t border_width);
-Vector2 __get_elem_with_border_dims(Rectangle bounds, uint32_t border_width);
-Vector2 __get_elem_text_pos(Rectangle bounds, Font font, const char* text);
-Vector2 __get_text_pos_align(Rectangle bounds, uint32_t left_padding, uint32_t right_padding, 
+extern Vector2 __get_elem_with_border_pos(Rectangle bounds, uint32_t border_width);
+extern Vector2 __get_elem_with_border_dims(Rectangle bounds, uint32_t border_width);
+extern Vector2 __get_elem_text_pos(Rectangle bounds, Font font, const char* text);
+extern Vector2 __get_text_pos_align(Rectangle bounds, uint32_t left_padding, uint32_t right_padding, 
                              enum TextAlignment text_align, Font font, float font_size, const char* text);
 
 /* Functions for getting elements states */
-elem_state_t get_button_state(button_t button, bool* active);
-elem_state_t get_toggle_state(toggle_t toggle, bool* active);
+extern elem_state_t get_button_state(button_t button, bool* active);
+extern elem_state_t get_toggle_state(toggle_t toggle, bool* active);
 
 /* Functions for changing element states */
-void __detect_button_state_change(button_t* button);
-void __detect_toggle_state_change(toggle_t* toggle);
+extern void __detect_button_state_change(button_t* button);
+extern void __detect_toggle_state_change(toggle_t* toggle);
 
-int get_button_index_in_grid_by_its_idx(button_grid_t button_grid, elem_idx idx);
+extern int get_button_index_in_grid_by_its_idx(button_grid_t button_grid, elem_idx idx);
 
 /* Memory management functions */
-void free_button_grid(button_grid_t button_grid);
-void free_cellbox(cellbox_t cellbox);
+extern void free_button_grid(button_grid_t button_grid);
+extern void free_cellbox(cellbox_t cellbox);
 
 /* Miscellaneous functions */
-char* rlui_strdup(const char* str);
+extern char* rlui_strdup(const char* str);
 
-#ifdef RLUI_ELEMS_IMPLEMENTATION
-
-
-#endif /* RLUI_ELEMS_IMPLEMENTATION */
 #endif /* RLUI_ELEMS_H_ */

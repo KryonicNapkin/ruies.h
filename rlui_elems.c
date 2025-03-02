@@ -69,29 +69,27 @@ struct GlobalStyle __style = {
  *       and you should remove the check for IsGpuReady in the .h file for this function to 
  *       correctly load your desired font 
  */
-#ifdef USE_CUSTOM_FONT
-    void set_font_loader_function(enum Elements elem, Font (*fontloader)(void)) {
-        if (elem == ALL_ELEMENTS) {
-            for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
-                __style.fontloader[i] = fontloader;
-            }
-        } else { 
-            __style.fontloader[elem] = fontloader;
+void set_font_loader_function(enum Elements elem, Font (*fontloader)(void)) {
+    if (elem == ALL_ELEMENTS) {
+        for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
+            __style.fontloader[i] = fontloader;
         }
-        __rlui_error = 0;
+    } else { 
+        __style.fontloader[elem] = fontloader;
     }
+    __rlui_error = 0;
+}
 
-    void set_elem_font_size(enum Elements elem, float font_size) {
-        if (elem == ALL_ELEMENTS) {
-            for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
-                __style.font_sizes[i] = font_size;
-            }
-        } else { 
-            __style.font_sizes[elem] = font_size;
+void set_elem_font_size(enum Elements elem, float font_size) {
+    if (elem == ALL_ELEMENTS) {
+        for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
+            __style.font_sizes[i] = font_size;
         }
-        __rlui_error = 0;
+    } else { 
+        __style.font_sizes[elem] = font_size;
     }
-#endif /* USE_CUSTOM_FONT */
+    __rlui_error = 0;
+}
 
 int check_rlui_error(void) {
     return __rlui_error;

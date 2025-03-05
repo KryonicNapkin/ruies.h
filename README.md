@@ -64,4 +64,5 @@ int main(void) {
     return 0 ;
 }
 ```
-[![Example](https://raw.githubusercontent.com/KryonicNapkin/ruies.h/main/examples/button/button.png)](https://raw.githubusercontent.com/KryonicNapkin/ruies.h/main/examples/button/button_show.mp4)
+Example:
+![](examples/button/button_show.mp4)

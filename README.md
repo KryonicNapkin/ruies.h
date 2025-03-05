@@ -10,7 +10,8 @@ After you are done installing raylib follow these steps below
 # Clone repository
 git clone https://github.com/KryonicNapkin/ruies.h
 cd ruies.h
-# the default font used by the elements is Iosevka Nerd Font Bold
+# the default font used by the library is PixeloidSans font 
+# license : ./assets/License.txt
 cp ruies.h <your project path>/
 ```
 

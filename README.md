@@ -1,5 +1,5 @@
 # rlui_elems
-RayLib UI elements is a small library that provides a few (exactly three) basic UI elements for really simple UI creation using raysan5's raylib
+RaylibUIElementS is a header only library that provides basic UI elements for simple UI creation using raysan5's raylib
 
 ## Installation
 First you need to have raylib installed for this library to work!
@@ -8,19 +8,19 @@ Check [raylib](https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux#insta
 After you are done installing raylib follow these steps below
 ```bash
 # Clone repository
-git clone https://github.com/KryonicNapkin/rlui_elems
-cd rlui_elems
+git clone https://github.com/KryonicNapkin/ruies.h
+cd ruies.h
 # the default font used by the elements is Iosevka Nerd Font Bold
-cp rlui_elems.c rlui_elems.h IosevkaNerdFont-Bold.ttf <your project path>/
+cp ruies.h <your project path>/
 ```
 
 And thats it!
 
 ## Compilation
-You need all the neccessery flags that are required by raylib and also link rlui_elems.c file to your main.c file 
+You don't need any additional options passed to the compiler
 ```bash
 # Compile
-gcc -Wall -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -o <output> <main_file> rlui_elems.c
+gcc -Wall -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -o <output> <main_file>
 ```
 
 BABABOOM! Its done!
@@ -28,49 +28,39 @@ BABABOOM! Its done!
 ## Examples
 ### Simple button without highligthing
 ```C
+/* NOTE: You MUST #include "raylib.h" before RUIES_IMPLEMENTATION for the library to work */
 #include "raylib.h"
-#include "rlui_elems.h"
 
-#define WINW 800        /* Window width */
-#define WINH 600        /* Window height */
+/* Library and its implementation */
+#define RUIES_IMPLEMENTATION
+#include "../../ruies.h"
 
 int main(void) {
-    /* Init default window with defined width and height */
-    InitWindow(WINW, WINH, "title");
-    /* Set target FPS of the window */
+    /* Standard raylib initialization */
+    InitWindow(800, 600, "Test");
     SetTargetFPS(60);
 
-    /* We define button horizontal and vertical position and also width and height */
-    /* For demonstration we set all these values to the same number */
-    int32_t button_posx = 100;
-    int32_t button_posy = 100;
-    int32_t button_width = 100;
-    int32_t button_height = 45;
+    /* NOTE: For text to be displayed you need to call ruies_load_default_font() before any other function */
+    ruies_load_default_font();
 
-    /* make_button is used to create a button */
-    /* This function accepts 6 arguments; first 4 are earlier defined positions and dimensions
-     * and 5 is a string the will be displayes as a text inside a button, the 6 argument is
-     * whether you like to enable highlight on hover 
-     */
-     /* We are are not going to set the last value for sake of simplicity */
-    button_t button = make_button(button_posx, button_posy, button_width, button_height, "demo", 0);
-    /* This function automaticaly sets other values to the DEF_* values in the rlui_elems.h file */
-    /* You can change these values using button_attr() function but that will be shown in another example */
+    /* Button dimensions as of type Ruies_Rect_t */
+    Ruies_Rect_t button_dims = {100, 100, 200, 50};
+    /* Creation of button */
+    Ruies_Button_t button = make_button(button_dims, "Click me");
 
     /* Raylib loop */
     while (!WindowShouldClose()) {
-        BeginDrawing(); 
+        BeginDrawing();
         {
-            /* This function renders the actual button on the window */
-            render_button(button);
             ClearBackground(RAYWHITE);
+            /* Render the button */
+            /* NOTE: you pass it as a pointer because this function also changes the button state structure element */
+            render_button(&button);
         }
         EndDrawing();
     }
     CloseWindow();
-    return 0;
+    return 0 ;
 }
 ```
-
-As you could see the button's font is a little small or really not pretty
 

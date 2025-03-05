@@ -5,4 +5,4 @@ LDFLAGS	= -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 all: button/button
 
 button/button: button/button.c
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@

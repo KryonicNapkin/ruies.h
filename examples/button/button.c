@@ -18,17 +18,23 @@ int main(void) {
     /* Creation of button */
     Ruies_Button_t button = make_button(button_dims, "Click me");
 
+    /* true if button state is CLICKED */
+    bool active;
+
     /* Raylib loop */
     while (!WindowShouldClose()) {
+        /* Set the variable to true if button state is CLICKED */
+        get_button_state(button, &active);
         BeginDrawing();
         {
             ClearBackground(RAYWHITE);
             /* Render the button */
             /* NOTE: you pass it as a pointer because this function also changes the button state structure element */
             render_button(&button);
+            if (active) DrawRectangle(300, 300, 300, 300, RED);
         }
         EndDrawing();
     }
     CloseWindow();
-    return 0 ;
+    return 0;
 }

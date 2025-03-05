@@ -4,5 +4,5 @@ LDFLAGS	= -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 all: button/button
 
-button/button: button/button.c ../rlui_elems.c
+button/button: button/button.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)

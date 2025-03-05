@@ -18,7 +18,7 @@ cp ruies.h <your project path>/
 And thats it!
 
 ## Compilation
-You don't need any additional options passed to the compiler
+You don't need to pass any additional options for it to compile
 ```bash
 # Compile
 gcc -Wall -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -o <output> <main_file>

@@ -36,8 +36,6 @@
 
 #include <stdint.h>                     /* For type compatibility */
 
-#include "raylib.h"
-
 #ifndef USE_CUSTOM_FONT
 /* Default font */
 

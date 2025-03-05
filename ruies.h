@@ -36,6 +36,8 @@
 
 #include <stdint.h>                     /* For type compatibility */
 
+#include "raylib.h"
+
 #ifndef USE_CUSTOM_FONT
 /* Default font */
 
@@ -839,7 +841,7 @@ void free_cellbox(Ruies_CellBox_t cellbox);
 /* Miscellaneous functions */
 char* rlui_strdup(const char* str);
 
-#ifdef RUIES_IMPLEMENTATION
+#ifndef RUIES_IMPLEMENTATION
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1685,7 +1687,7 @@ int get_button_index_in_grid_by_its_idx(Ruies_ButtonGrid_t button_grid, Ruies_El
     __ruies_error = 1;
     return -1;
 }
-/* */
+/* Free the buttons in a Ruies_ButtonGrid_t */
 void free_button_grid(Ruies_ButtonGrid_t button_grid) {
     free(button_grid.buttons);
     __ruies_error = 0;

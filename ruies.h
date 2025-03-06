@@ -14,7 +14,7 @@
  *              OptionList, 
  *              Slider, 
  *              ProgressBar, 
- *              WindowBox,  -- In progress
+ *              WindowBox,  -- DONE
  *              TabPane, 
  *              TitlebarButtons, 
  *              HeaderBar,
@@ -22,7 +22,7 @@
  *          )
  *       2. Rework the style system (
  *              Loading a custom style for different Elements,
- *              Do something with fonts,
+ *              Do something with fonts, -- DONE
  *              
  *          )
  *
@@ -467,7 +467,7 @@ static GlyphInfo default_font_glyphs[189] = {
     { 217, 0, -1, 13, { 0 }}, { 218, 0, -1, 13, { 0 }}, { 219, 0, -1, 13, { 0 }}, { 220, 0, -1, 13, { 0 }},
 };
 
-// Font loading function: Test
+// Font loading function: DefaultFont
 static Font RuiesLoadDefaultFont(void) {
     Font font = { 0 };
 
@@ -523,16 +523,22 @@ typedef struct {
     float y;
 } Ruies_Vec2_t;
 
-#define RUIES_RECT(rayrect)      ((Ruies_Rect_t){.x = rayrect.x, .y = rayrect.y, .width = rayrect.width, .height = rayrect.height})
-#define RUIES_COLOR(raycolor)    ((Ruies_Color_t){.r = raycolor.r, .g = raycolor.g, .b = raycolor.b, .a = raycolor.a})
-#define RUIES_VEC2(rayvec2)      ((Ruies_Vec2_t){.x = rayvec2.x, .y = rayvec2.y})
+#define RUIES_RECT(rayrect)        ((Ruies_Rect_t){.x = rayrect.x, .y = rayrect.y, .width = rayrect.width, .height = rayrect.height})
+#define RUIES_COLOR(raycolor)      ((Ruies_Color_t){.r = raycolor.r, .g = raycolor.g, .b = raycolor.b, .a = raycolor.a})
+#define RUIES_VEC2(rayvec2)        ((Ruies_Vec2_t){.x = rayvec2.x, .y = rayvec2.y})
 
-#define RAYLIB_RECT(ruiesrect)   ((Rectangle){.x = ruiesrect.x, .y = ruiesrect.y, .width = ruiesrect.width, .height = ruiesrect.height})
-#define RAYLIB_COLOR(ruiescolor) ((Color){.r = ruiescolor.r, .g = ruiescolor.g, .b = ruiescolor.b, .a = ruiescolor.a})
-#define RAYLIB_VEC2(ruiesvec2)   ((Vector2){.x = ruiesvec2.x, .y = ruiesvec2.y})
-#define VEC2ADDVALUE(v, val)     ((Ruies_Vec2_t){.x = v.x + (float)val, .y = v.y + (float)val})
-#define VEC2SUBVALUE(v, val)     ((Ruies_Vec2_t){.x = v.x - (float)val, .y = v.y - (float)val})
-#define HEX2RUIESCOLOR(hexval)   \
+#define RAYLIB_RECT(ruiesrect)     ((Rectangle){.x = ruiesrect.x, .y = ruiesrect.y, .width = ruiesrect.width, .height = ruiesrect.height})
+#define RAYLIB_COLOR(ruiescolor)   ((Color){.r = ruiescolor.r, .g = ruiescolor.g, .b = ruiescolor.b, .a = ruiescolor.a})
+#define RAYLIB_VEC2(ruiesvec2)     ((Vector2){.x = ruiesvec2.x, .y = ruiesvec2.y})
+/* Some math operations */
+#define VEC2ADDVALUE(v, val)       ((Ruies_Vec2_t){.x = v.x + (float)val, .y = v.y + (float)val})
+#define VEC2SUBVALUE(v, val)       ((Ruies_Vec2_t){.x = v.x - (float)val, .y = v.y - (float)val})
+#define TOPLEFTRECTPOINT(rect)     ((Ruies_Vec2_t){.x = rect.x, .y = rect.y})
+#define TOPRIGHTRECTPOINT(rect)    ((Ruies_Vec2_t){.x = rect.x + rect.width, .y = rect.y})
+#define BOTTOMLEFTRECTPOINT(rect)  ((Ruies_Vec2_t){.x = rect.x, .y = rect.y + rect.height})
+#define BOTTOMRIGHTRECTPOINT(rect) ((Ruies_Vec2_t){.x = rect.x + rect.width, .y = rect.y + rect.height})
+
+#define HEX2RUIESCOLOR(hexval)     \
     ({                                                      \
         (Ruies_Color_t) {                                   \
             .r = (unsigned char)((hexval >> 24) & 0xFF),    \
@@ -543,7 +549,7 @@ typedef struct {
     })
 
 
-typedef int64_t Ruies_ElemID_t;
+typedef int32_t Ruies_ElemID_t;
 
 typedef enum {
     NORMAL_BORDER = 0,
@@ -681,6 +687,7 @@ typedef struct {
     Ruies_Rect_t bounds;
     uint32_t cell_rows;
     uint32_t cell_cols;
+    int32_t num_of_cells;
     uint32_t cell_margin;
     Ruies_Rect_t* cell_bounds;
     int* cell_ids;
@@ -738,6 +745,7 @@ typedef struct {
 
 #ifndef USE_CUSTOM_FONT
     void ruies_load_default_font(void);
+    Font ruies_extract_default_font(void);
 #else 
     void ruies_load_custom_font(Font font, float font_size);
 #endif
@@ -770,6 +778,8 @@ void insert_cellbox_into_window_box(Ruies_CellBox_t* cellbox, Ruies_WindowBox_t 
 void set_cellbox_cell_margin(Ruies_CellBox_t* cellbox, uint32_t cell_margin);
 void calculate_cells(Ruies_CellBox_t* cellbox);
 int relative_cellbox_id(int cols, int x, int y);
+
+void visualise_cells(Ruies_CellBox_t cellbox);
 
 /* Additional ways of creating elements */
 Ruies_Button_t make_button_from_button(Ruies_Button_t button, Ruies_Rect_t bounds, const char* text);
@@ -837,12 +847,16 @@ char* rlui_strdup(const char* str);
 #include <stdlib.h>
 #include <string.h>
 
+/* Global variables */
+
+/* if global font is loaded */
+static bool __global_font_loaded = false;
+/* global reserved font */
+static Font __global_reserved_font = {0};
 /* custom variable that stores current error */
 static int __ruies_error = 0;
-
 /* variable to keep track of current element id */
-static int __current_elem_idx = 0;
-
+static Ruies_ElemID_t __current_elem_idx = 0;
 /* STYLE DEFINITIONS OF THE ELEMENTS */
 static Ruies_GlobalStyle_t __style = {
     .elem_styles = {
@@ -886,15 +900,15 @@ static Ruies_GlobalStyle_t __style = {
             0, ALIGN_LEFT, 
             10, 0, 0, 0,      0, 0, 0, 0
         },
-        /* CellBox */
+        /* CELLBOX */
         { 
-            NO_COLOR_VALUE, BASE_COLOR_NORMAL, NO_COLOR_VALUE,              // state: NORMAL
+            NO_COLOR_VALUE, BASE_COLOR_NORMAL, TEXT_COLOR_NORMAL,           // state: NORMAL
             NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: FOCUSED
             NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: CLICKED
             0, 0, 
             0, 0, 0, 0,      0, 0, 0, 0
         },
-        /* CellBox */
+        /* WINDOWBOX */
         { 
             BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, NO_COLOR_VALUE,         // state: NORMAL
             NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: FOCUSED
@@ -923,6 +937,18 @@ static Ruies_GlobalStyle_t __style = {
             __style.fonts[i] = ruies_font;
             __style.font_sizes[i] = RUIES_FONT_SIZE;
         }
+        __global_reserved_font = ruies_font;
+        __global_font_loaded = true;
+        __ruies_error = 0;
+    }
+    Font ruies_extract_default_font(void) {
+        if (__global_font_loaded) {
+            __ruies_error = 0;
+            return __global_reserved_font;
+        } else { 
+            __ruies_error = 0;
+            return RUIES_FONT_FONT;
+        }
     }
 #else 
     void ruies_load_custom_font(Font font, float font_size) {
@@ -930,6 +956,8 @@ static Ruies_GlobalStyle_t __style = {
             __style.fonts[i] = font;
             __style.font_sizes[i] = font_size;
         }
+        __global_reserved_font = font;
+        __global_font_loaded = true;
     }
 #endif
 
@@ -1105,12 +1133,13 @@ Ruies_CellBox_t make_cellbox(Ruies_Rect_t bounds, uint32_t rows, uint32_t cols, 
     __current_elem_idx += 1;
     cellbox.bounds = bounds;
 
-    uint32_t size = rows*cols;
+    int32_t size = rows*cols;
     cellbox.cell_bounds = malloc(size * sizeof(Ruies_Rect_t));
     cellbox.cell_ids = malloc(size * sizeof(int));
     cellbox.cell_margin = cell_margin;
     cellbox.cell_cols = cols;
     cellbox.cell_rows = rows;
+    cellbox.num_of_cells = size;
 
     for (uint32_t i = 0; i < size; ++i) {
         cellbox.cell_ids[i] = i;
@@ -1142,15 +1171,18 @@ Ruies_WindowBox_t make_window_box(Ruies_Rect_t bounds, Ruies_WindowBoxStyles_t b
     return winbox;
 }
 
-void merge_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_CellBoxSides_t side, int idx1);
+/* TODO: Make this function work */
+void merge_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_CellBoxSides_t side, int idx1) {
+
+}
 void split_cell_horizontaly(Ruies_CellBox_t* cellbox, int idx);
 void split_cell_verticaly(Ruies_CellBox_t* cellbox, int idx);
 
 void inscribe_elem_into_cell(const void* elem, Ruies_ElementTypes_t type, Ruies_CellBox_t* cellbox, int cell_idx) {
     Ruies_Rect_t elem_bounds;
     bool found = false;
-    for (uint32_t i = 0; i < cellbox->cell_cols*cellbox->cell_rows; ++i) {
-        if (cellbox->cell_ids[i] == cell_idx) {
+    for (uint32_t i = 0; i < cellbox->num_of_cells; ++i) {
+        if (cellbox->cell_ids[cellbox->cell_ids[i]] == cell_idx) {
             elem_bounds = cellbox->cell_bounds[cell_idx];
             found = true;
             break;
@@ -1214,11 +1246,12 @@ void calculate_cells(Ruies_CellBox_t* cellbox) {
     float horiz_div = ((cellbox->bounds.width-((cellbox->cell_cols+1)*cellbox->cell_margin))/(float)cellbox->cell_cols);
     float verti_div = ((cellbox->bounds.height-((cellbox->cell_rows+1)*cellbox->cell_margin))/(float)cellbox->cell_rows);
 
-    for (uint32_t i = 0; i < cellbox->cell_rows*cellbox->cell_cols; ++i) {
-        cellbox->cell_bounds[i].x = cellbox->bounds.x+horizontal_step;
-        cellbox->cell_bounds[i].y = cellbox->bounds.y+vertical_step;
-        cellbox->cell_bounds[i].width = horiz_div;
-        cellbox->cell_bounds[i].height = verti_div;
+    for (uint32_t i = 0; i < cellbox->num_of_cells; ++i) {
+        int32_t cell_id = cellbox->cell_ids[i];
+        cellbox->cell_bounds[cell_id].x = cellbox->bounds.x+horizontal_step;
+        cellbox->cell_bounds[cell_id].y = cellbox->bounds.y+vertical_step;
+        cellbox->cell_bounds[cell_id].width = horiz_div;
+        cellbox->cell_bounds[cell_id].height = verti_div;
         horizontal_step += (horiz_div+cellbox->cell_margin);
         if ((i+1) % cellbox->cell_cols == 0) {
             vertical_step += (verti_div+cellbox->cell_margin);
@@ -1230,6 +1263,34 @@ void calculate_cells(Ruies_CellBox_t* cellbox) {
 
 int relative_cellbox_id(int cols, int x, int y) {
     return (y*cols)+x;
+}
+
+void visualise_cells(Ruies_CellBox_t cellbox) {
+    for (int i = 0; i < cellbox.num_of_cells; ++i) {
+        Ruies_Rect_t bounds = cellbox.cell_bounds[cellbox.cell_ids[i]];
+
+        /* Display each of cells id */
+        char buff[32];
+        snprintf(buff, sizeof(buff), "%d", cellbox.cell_ids[i]);
+        Vector2 text_pos = RAYLIB_VEC2(__get_elem_text_pos(bounds, __style.fonts[CELLBOX], buff));
+
+        Vector2 start_pos_top_left = RAYLIB_VEC2(TOPLEFTRECTPOINT(bounds));
+        Vector2 start_pos_bottom_right = RAYLIB_VEC2(BOTTOMRIGHTRECTPOINT(bounds));
+
+        Vector2 end_pos1 = RAYLIB_VEC2(BOTTOMLEFTRECTPOINT(bounds));
+        Vector2 end_pos2 = RAYLIB_VEC2(TOPRIGHTRECTPOINT(bounds));
+        Vector2 end_pos3 = RAYLIB_VEC2(BOTTOMLEFTRECTPOINT(bounds));
+        Vector2 end_pos4 = RAYLIB_VEC2(TOPRIGHTRECTPOINT(bounds));
+
+        Color color = RAYLIB_COLOR(HEX2RUIESCOLOR(__style.elem_styles[CELLBOX][ATTR_TEXT_COLOR_NORMAL]));
+
+        DrawLineEx(start_pos_top_left, end_pos1, 1, color);
+        DrawLineEx(start_pos_top_left, end_pos2, 1, color);
+        DrawLineEx(start_pos_bottom_right, end_pos3, 1, color);
+        DrawLineEx(start_pos_bottom_right, end_pos3, 1, color);
+        DrawTextEx(__style.fonts[CELLBOX], buff, text_pos, __style.font_sizes[CELLBOX], 0, color);
+    }
+    __ruies_error = 0;
 }
 
 Ruies_Button_t make_button_from_button(Ruies_Button_t button, Ruies_Rect_t bounds, const char* text) {

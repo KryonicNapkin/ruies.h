@@ -731,14 +731,6 @@ typedef struct {
  *     You can check the value of using function check_rlui_error()
  * 
 */
-/* custom variable that stores current error */
-int __ruies_error;
-
-/* variable to keep track of current element id */
-int __current_ElemID_t;
-
-/* Default style for the elements */
-Ruies_GlobalStyle_t __style;
 
 /*-------------------------------------------------------------*/
 /*-----------------   FUNCTION DECLARATIONS   -----------------*/
@@ -846,12 +838,13 @@ char* rlui_strdup(const char* str);
 #include <string.h>
 
 /* custom variable that stores current error */
-int __ruies_error = 0;
+static int __ruies_error = 0;
 
-int __current_elem_idx = 0;
+/* variable to keep track of current element id */
+static int __current_elem_idx = 0;
 
 /* STYLE DEFINITIONS OF THE ELEMENTS */
-Ruies_GlobalStyle_t __style = {
+static Ruies_GlobalStyle_t __style = {
     .elem_styles = {
         /* Button */
         {

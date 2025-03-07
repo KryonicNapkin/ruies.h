@@ -10,7 +10,7 @@
 
 /* 
  * TODO: 1. Make more elements (
- *              CheckBox, 
+ *              CheckBox -- Work in progress, 
  *              OptionList, 
  *              Slider, 
  *              ProgressBar, 
@@ -18,6 +18,7 @@
  *              TabPane, 
  *              TitlebarButtons, 
  *              HeaderBar,
+ *              DropDown,
  *              ...
  *          )
  *       2. Rework the style system (
@@ -36,6 +37,7 @@
 
 #include <stdint.h>                     /* For type compatibility */
 
+#include "raylib.h"
 #ifndef USE_CUSTOM_FONT
 /* Default font */
 
@@ -494,7 +496,7 @@ static Font RuiesLoadDefaultFont(void) {
 }
 #endif /* ifndef USE_CUSTOM_FONT */
 
-#define MAX_ELEMENTS_COUNT     7
+#define MAX_ELEMENTS_COUNT     8
 #define MAX_ELEMENT_ATTRIBUTES 19
 
 typedef struct {
@@ -548,7 +550,6 @@ typedef struct {
         };                                                  \
     })
 
-
 typedef int32_t Ruies_ElemID_t;
 
 typedef enum {
@@ -564,6 +565,7 @@ typedef enum {
     LABEL,
     CELLBOX,
     WINBOX,
+    CHECKBOX,
     ALL_ELEMENTS,
 } Ruies_ElementTypes_t;
 
@@ -572,6 +574,7 @@ typedef enum {
     FOCUSED,
     CLICKED,
 } Ruies_ElemState_t;
+
 /* Text alignment */
 typedef enum {
     ALIGN_LEFT = 0,
@@ -591,8 +594,7 @@ typedef enum {
     RIGHT_SIDE,
     TOP,
     BOTTOM,
-} Ruies_CellBoxSides_t;
-
+} Ruies_Sides_t;
 
 /* Button attributes for the button_grid function */
 typedef enum {
@@ -683,14 +685,19 @@ typedef struct {
 } Ruies_Label_t;
 
 typedef struct {
+    Ruies_Rect_t bounds;
+    int id;
+    bool is_inscribed_elem;
+} Ruies_CellBoxCell_t;
+
+typedef struct {
     Ruies_ElemID_t id;
     Ruies_Rect_t bounds;
     uint32_t cell_rows;
     uint32_t cell_cols;
     int32_t num_of_cells;
     uint32_t cell_margin;
-    Ruies_Rect_t* cell_bounds;
-    int* cell_ids;
+    Ruies_CellBoxCell_t* cells;
     int number_of_inscribed_elems;
 } Ruies_CellBox_t;
 
@@ -705,9 +712,18 @@ typedef struct {
     uint32_t border_gap;
 } Ruies_WindowBox_t;
 
-/*------------------------------------------------------------*/
-/*----------------------    TYPEDEFS    ----------------------*/
-/*------------------------------------------------------------*/
+typedef struct {
+    Ruies_ElemID_t id;
+    Ruies_Rect_t bounds;
+    uint32_t margin;
+    uint32_t style[MAX_ELEMENT_ATTRIBUTES];
+    char* text;
+    Font font;
+    float font_size;
+    Ruies_Sides_t text_pos;
+    Ruies_TextAlignment_t text_align;
+    Ruies_ElemState_t state;
+} Ruies_CheckBox_t;
 
 /* Default values for the global style */
 #define BORDER_COLOR_NORMAL  0x282C34FF
@@ -731,13 +747,6 @@ typedef struct {
 #endif
 
 #define RUIES_FONT           ((Font){0})
-
-/*
- NOTE: If it's 0 than that means no error 
- *     If it's other than 0 that means error 
- *     You can check the value of using function check_rlui_error()
- * 
-*/
 
 /*-------------------------------------------------------------*/
 /*-----------------   FUNCTION DECLARATIONS   -----------------*/
@@ -769,7 +778,8 @@ Ruies_WindowBox_t make_window_box(Ruies_Rect_t bounds, Ruies_WindowBoxStyles_t b
                                    uint32_t border_width, uint32_t border_gap);
  
 /* Cellbox releated functions */
-void merge_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_CellBoxSides_t side, int idx1);
+void merge_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_Sides_t side, int idx1);
+void merge_n_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_Sides_t side, int idx1, int n);
 void split_cell_horizontaly(Ruies_CellBox_t* cellbox, int idx);
 void split_cell_verticaly(Ruies_CellBox_t* cellbox, int idx);
 void inscribe_elem_into_cell(const void* elem, Ruies_ElementTypes_t type, Ruies_CellBox_t* cellbox, int cell_id);
@@ -841,7 +851,7 @@ void free_cellbox(Ruies_CellBox_t cellbox);
 /* Miscellaneous functions */
 char* rlui_strdup(const char* str);
 
-#ifdef RUIES_IMPLEMENTATION
+#ifndef RUIES_IMPLEMENTATION
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -853,6 +863,12 @@ char* rlui_strdup(const char* str);
 static bool __global_font_loaded = false;
 /* global reserved font */
 static Font __global_reserved_font = {0};
+/*
+ NOTE: If it's 0 than that means no error 
+ *     If it's other than 0 that means error 
+ *     You can check the value of using function check_rlui_error()
+ * 
+*/
 /* custom variable that stores current error */
 static int __ruies_error = 0;
 /* variable to keep track of current element id */
@@ -916,12 +932,20 @@ static Ruies_GlobalStyle_t __style = {
             0, 0, 
             0, 0, 0, 0,      0, 0, 0, 0
         },
+        /* CHECKBOX */
+        { 
+            BORDER_COLOR_NORMAL, BASE_COLOR_NORMAL, NO_COLOR_VALUE,         // state: NORMAL
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: FOCUSED
+            NO_COLOR_VALUE, NO_COLOR_VALUE, NO_COLOR_VALUE,                 // state: CLICKED
+            0, 0, 
+            0, 0, 0, 0,      0, 0, 0, 0
+        },
     }, 
-    .fonts = {RUIES_FONT, RUIES_FONT, RUIES_FONT, RUIES_FONT, RUIES_FONT, RUIES_FONT, RUIES_FONT},
+    .fonts = {RUIES_FONT, RUIES_FONT, RUIES_FONT, RUIES_FONT, RUIES_FONT, RUIES_FONT, RUIES_FONT, RUIES_FONT},
     #ifndef USE_CUSTOM_FONT
-    .font_sizes = {RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE},
+    .font_sizes = {RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE},
     #else 
-    .font_sizes = {       0,               0,               0,               0,               0,               0,               0       },
+    .font_sizes = {       0,               0,               0,               0,               0,               0,               0,               0},
     #endif
 };
 
@@ -1134,15 +1158,15 @@ Ruies_CellBox_t make_cellbox(Ruies_Rect_t bounds, uint32_t rows, uint32_t cols, 
     cellbox.bounds = bounds;
 
     int32_t size = rows*cols;
-    cellbox.cell_bounds = malloc(size * sizeof(Ruies_Rect_t));
-    cellbox.cell_ids = malloc(size * sizeof(int));
+    Ruies_CellBoxCell_t* cells = malloc(size * sizeof(Ruies_CellBoxCell_t));
+    cellbox.cells = cells;
     cellbox.cell_margin = cell_margin;
     cellbox.cell_cols = cols;
     cellbox.cell_rows = rows;
     cellbox.num_of_cells = size;
 
     for (uint32_t i = 0; i < size; ++i) {
-        cellbox.cell_ids[i] = i;
+        cellbox.cells[i].id = i;
     }
     calculate_cells(&cellbox);
 
@@ -1171,24 +1195,64 @@ Ruies_WindowBox_t make_window_box(Ruies_Rect_t bounds, Ruies_WindowBoxStyles_t b
     return winbox;
 }
 
+/* NOTE: Halted further development on this functionality because of my luck of knowledge */
 /* TODO: Make this function work */
-void merge_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_CellBoxSides_t side, int idx1) {
+void merge_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_Sides_t side, int idx1) {
+    bool good_id = false;
+    for (int i = 0; i < cellbox->num_of_cells; ++i) {
+        if (cellbox->cells[i].id == idx1) {
+            good_id = true;
+            break;
+        }
+    }
+    if (!good_id) __ruies_error = 1;
+    else {
+        int next_cell_id = 0;
+        Ruies_Rect_t cell_new_bounds = {0};
+        switch (side) {
+            case LEFT_SIDE:
+                next_cell_id = idx1-1;
+                break;
+            case RIGHT_SIDE:
+                next_cell_id = idx1+1;
+                break;
+            case TOP:
+                next_cell_id = idx1-cellbox->cell_cols;
+                break;
+            case BOTTOM:
+                next_cell_id = idx1+cellbox->cell_cols;
+                break;
+            default:
+                __ruies_error = 1;
+                break;
+        }
+        cellbox->cells[next_cell_id].id = -1;
+        cellbox->cells[next_cell_id].bounds = (Ruies_Rect_t){0};
+        cellbox->cells[next_cell_id].is_inscribed_elem = true;
+        __ruies_error = 0;
+    }
+}
+
+void merge_n_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_Sides_t side, int idx1, int n) {
 
 }
+
 void split_cell_horizontaly(Ruies_CellBox_t* cellbox, int idx);
 void split_cell_verticaly(Ruies_CellBox_t* cellbox, int idx);
 
 void inscribe_elem_into_cell(const void* elem, Ruies_ElementTypes_t type, Ruies_CellBox_t* cellbox, int cell_idx) {
     Ruies_Rect_t elem_bounds;
     bool found = false;
+    int cell_num = 0;
     for (uint32_t i = 0; i < cellbox->num_of_cells; ++i) {
-        if (cellbox->cell_ids[cellbox->cell_ids[i]] == cell_idx) {
-            elem_bounds = cellbox->cell_bounds[cell_idx];
+        if (cellbox->cells[i].id == cell_idx) {
+            cell_num = i;
+            elem_bounds = cellbox->cells[cell_num].bounds;
             found = true;
             break;
         }
     }
-    if (!found) __ruies_error = 1;
+    if (!found || cellbox->cells[cell_num].is_inscribed_elem) __ruies_error = 1;
     else {
         switch (type) {
             case BUTTON:
@@ -1208,6 +1272,7 @@ void inscribe_elem_into_cell(const void* elem, Ruies_ElementTypes_t type, Ruies_
                 break;
         }
         cellbox->number_of_inscribed_elems++;
+        cellbox->cells[cell_num].is_inscribed_elem = true;
         __ruies_error = 0;
     }
 }
@@ -1246,12 +1311,12 @@ void calculate_cells(Ruies_CellBox_t* cellbox) {
     float horiz_div = ((cellbox->bounds.width-((cellbox->cell_cols+1)*cellbox->cell_margin))/(float)cellbox->cell_cols);
     float verti_div = ((cellbox->bounds.height-((cellbox->cell_rows+1)*cellbox->cell_margin))/(float)cellbox->cell_rows);
 
+    int c = 0, r = 0;
     for (uint32_t i = 0; i < cellbox->num_of_cells; ++i) {
-        int32_t cell_id = cellbox->cell_ids[i];
-        cellbox->cell_bounds[cell_id].x = cellbox->bounds.x+horizontal_step;
-        cellbox->cell_bounds[cell_id].y = cellbox->bounds.y+vertical_step;
-        cellbox->cell_bounds[cell_id].width = horiz_div;
-        cellbox->cell_bounds[cell_id].height = verti_div;
+        cellbox->cells[i].bounds.x = cellbox->bounds.x+horizontal_step;
+        cellbox->cells[i].bounds.y = cellbox->bounds.y+vertical_step;
+        cellbox->cells[i].bounds.width = horiz_div;
+        cellbox->cells[i].bounds.height = verti_div;
         horizontal_step += (horiz_div+cellbox->cell_margin);
         if ((i+1) % cellbox->cell_cols == 0) {
             vertical_step += (verti_div+cellbox->cell_margin);
@@ -1267,11 +1332,11 @@ int relative_cellbox_id(int cols, int x, int y) {
 
 void visualise_cells(Ruies_CellBox_t cellbox) {
     for (int i = 0; i < cellbox.num_of_cells; ++i) {
-        Ruies_Rect_t bounds = cellbox.cell_bounds[cellbox.cell_ids[i]];
+        Ruies_Rect_t bounds = cellbox.cells[i].bounds;
 
         /* Display each of cells id */
         char buff[32];
-        snprintf(buff, sizeof(buff), "%d", cellbox.cell_ids[i]);
+        snprintf(buff, sizeof(buff), "%d", cellbox.cells[i].id);
         Vector2 text_pos = RAYLIB_VEC2(__get_elem_text_pos(bounds, __style.fonts[CELLBOX], buff));
 
         Vector2 start_pos_top_left = RAYLIB_VEC2(TOPLEFTRECTPOINT(bounds));
@@ -1746,8 +1811,7 @@ void free_button_grid(Ruies_ButtonGrid_t button_grid) {
 }
 
 void free_cellbox(Ruies_CellBox_t cellbox) {
-    free(cellbox.cell_ids);
-    free(cellbox.cell_bounds);
+    free(cellbox.cells);
     __ruies_error = 0;
 }
 

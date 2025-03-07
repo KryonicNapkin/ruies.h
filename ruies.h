@@ -37,7 +37,6 @@
 
 #include <stdint.h>                     /* For type compatibility */
 
-#include "raylib.h"
 #ifndef USE_CUSTOM_FONT
 /* Default font */
 
@@ -851,7 +850,7 @@ void free_cellbox(Ruies_CellBox_t cellbox);
 /* Miscellaneous functions */
 char* rlui_strdup(const char* str);
 
-#ifndef RUIES_IMPLEMENTATION
+#ifdef RUIES_IMPLEMENTATION
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1345,22 +1345,9 @@ void inscribe_elem_into_cell(const void* elem, Ruies_ElementTypes_t type, Ruies_
 }
 
 void insert_cellbox_into_window_box(Ruies_CellBox_t* cellbox, Ruies_WindowBox_t winbox) {
-    Ruies_Rect_t bounds;
-    if (winbox.border_style == NORMAL_BORDER) {
-        bounds = (Ruies_Rect_t){
-            .x = winbox.bounds.x+winbox.style[ATTR_BORDER_WIDTH],
-            .y = winbox.bounds.y+winbox.style[ATTR_BORDER_WIDTH],
-            .width = winbox.bounds.width-(2.0f*winbox.style[ATTR_BORDER_WIDTH]),
-            .height = winbox.bounds.height-(2.0f*winbox.style[ATTR_BORDER_WIDTH]),
-        };
-    } else {
-        bounds = (Ruies_Rect_t){
-            .x = winbox.bounds.x+winbox.style[ATTR_BORDER_GAP]+(2.0f*winbox.style[ATTR_BORDER_WIDTH]),
-            .y = winbox.bounds.y+winbox.style[ATTR_BORDER_GAP]+(2.0f*winbox.style[ATTR_BORDER_WIDTH]),
-            .width = winbox.bounds.width-((4.0f*winbox.style[ATTR_BORDER_WIDTH])+(2.0f*winbox.style[ATTR_BORDER_WIDTH])),
-            .height = winbox.bounds.height-((4.0f*winbox.style[ATTR_BORDER_WIDTH])+(2.0f*winbox.style[ATTR_BORDER_WIDTH])),
-        };
-    }
+    Ruies_Rect_t bounds = {0};
+    if (winbox.border_style == NORMAL_BORDER) bounds = RECTWITHBORDER(winbox.bounds, winbox.style[ATTR_BORDER_WIDTH]);
+    else bounds = RECTWITHBORDER(winbox.bounds, winbox.style[ATTR_BORDER_GAP]+(2.0f*winbox.style[ATTR_BORDER_WIDTH]));
     cellbox->bounds = bounds;
     calculate_cells(cellbox);
     __ruies_error = 0;

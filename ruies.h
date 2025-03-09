@@ -1,5 +1,5 @@
 /* 
- * ruies.h is a simple header-only library that adds some ui elements to 
+ * ruies.h is a simple header-only library that adds some ui elements for raylib
  * 
  * be used in raylib applications
  *                                                      GITHUB
@@ -10,7 +10,7 @@
 
 /* 
  * TODO: 1. Make more elements (
- *              CheckBox -- Work in progress, 
+ *              CheckBox -- DONE, 
  *              OptionList, 
  *              Slider, 
  *              ProgressBar, 
@@ -578,7 +578,6 @@ typedef enum {
     CELLBOX,
     WINBOX,
     CHECKBOX,
-    ALL_ELEMENTS,
 } Ruies_ElementTypes_t;
 
 typedef enum {
@@ -818,7 +817,8 @@ Ruies_Toggle_t make_toggle_from_toggle(Ruies_Toggle_t toggle, Ruies_Rect_t bound
 void attach_label_to_elem(const void* elem, Ruies_ElementTypes_t type, Ruies_Label_t* label, Ruies_ElemAttachment_t attach_to);
 
 /* Style functions */
-void set_global_style_attr(Ruies_ElementTypes_t elem_type, Ruies_ElemAttr_t attr, uint32_t value);
+void set_elem_style_attr(Ruies_ElementTypes_t elem_type, Ruies_ElemAttr_t attr, uint32_t value);
+void set_global_style_attr(Ruies_ElemAttr_t attr, uint32_t value);
 uint32_t* get_style(Ruies_ElementTypes_t elem, int* size);
 uint32_t get_style_value(Ruies_ElementTypes_t elem, Ruies_ElemAttr_t attr);
 void get_style_colors(Ruies_ElemState_t state, uint32_t* style, Ruies_Color_t* border, Ruies_Color_t* base, Ruies_Color_t* text);
@@ -1015,11 +1015,6 @@ static Ruies_GlobalStyle_t __style = {
     #endif
 };
 
-/* NOTE: fontloader function should be generated using raylib's ExportFontAsCode() function
- *       and you should remove the check for IsGpuReady in the .h file for this function to 
- *       correctly load your desired font 
- */
-
 #ifndef USE_CUSTOM_FONT
     void ruies_load_default_font(void) {
         Font ruies_font = RUIES_FONT_FONT;
@@ -1032,13 +1027,9 @@ static Ruies_GlobalStyle_t __style = {
         __ruies_error = 0;
     }
     Font ruies_extract_default_font(void) {
-        if (__global_font_loaded) {
-            __ruies_error = 0;
-            return __global_reserved_font;
-        } else { 
-            __ruies_error = 0;
-            return RUIES_FONT_FONT;
-        }
+        __ruies_error = 0;
+        if (__global_font_loaded) return __global_reserved_font;
+        else return RUIES_FONT_FONT;
     }
 #else 
     void ruies_load_custom_font(Font font, float font_size) {
@@ -1048,19 +1039,14 @@ static Ruies_GlobalStyle_t __style = {
         }
         __global_reserved_font = font;
         __global_font_loaded = true;
+        __ruies_error = 0;
     }
 #endif
 
 void set_elem_font(Ruies_ElementTypes_t type, Font font, float font_size) {
-    if (type == ALL_ELEMENTS) {
-        for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
-            __style.fonts[i] = font;
-            __style.font_sizes[i] = font_size;
-        }
-    } else {
-        __style.fonts[type] = font;
-        __style.font_sizes[type] = font_size;
-    }
+    __style.fonts[type] = font;
+    __style.font_sizes[type] = font_size;
+    __ruies_error = 0;
 }
 
 int check_ruies_error(void) {
@@ -1519,34 +1505,26 @@ void attach_label_to_elem(const void* elem, Ruies_ElementTypes_t type, Ruies_Lab
     label->is_attached = true;
 }
 
-void set_global_style_attr(Ruies_ElementTypes_t elem_type, Ruies_ElemAttr_t attr, uint32_t value) {
-    if (elem_type == ALL_ELEMENTS) {
-        for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
-            __style.elem_styles[i][attr] = value;
-            __ruies_error = 0;
-        }
-    } else {
-        __style.elem_styles[elem_type][attr] = value;
+void set_elem_style_attr(Ruies_ElementTypes_t elem_type, Ruies_ElemAttr_t attr, uint32_t value) {
+    __style.elem_styles[elem_type][attr] = value;
+    __ruies_error = 0;
+}
+
+void set_global_style_attr(Ruies_ElemAttr_t attr, uint32_t value) {
+    for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
+        __style.elem_styles[i][attr] = value;
         __ruies_error = 0;
     }
 }
 
 uint32_t* get_style(Ruies_ElementTypes_t elem, int* size) {
-    if (elem == ALL_ELEMENTS) {
-        if (size != NULL) *size = 0;
-        __ruies_error = 1;
-        return NULL;
-    }
     *size = sizeof(__style.elem_styles[elem])/sizeof(__style.elem_styles[elem][0]);
     __ruies_error = 0;
     return __style.elem_styles[elem];
 }
 
 uint32_t get_style_value(Ruies_ElementTypes_t elem, Ruies_ElemAttr_t attr) {
-    if (elem == ALL_ELEMENTS) {
-        __ruies_error = 1;
-        return 0;
-    }
+    __ruies_error = 0;
     return __style.elem_styles[elem][attr];
 }
 

@@ -1,12 +1,11 @@
 /* 
- * ruies.h is a simple header-only library that adds some ui elements for raylib
- * 
- * be used in raylib applications
+ * ruies.h is a simple header-only library that adds some ui elements be used in raylib applications
+ *
  *                                                      GITHUB
  *     Created by: KryonicNapkin        - https://www.github.com/KryonicNapkin/ruies.h
  *     Credit: raysan5's raygui library - https://www.github.com/raysan5/raygui
  */
-/* NOTE: To use this library you NEED to have raylib.h included prior */
+/* NOTE: You NEED to include raylib.h before including this library */
 
 /* 
  * TODO: 1. Make more elements (
@@ -15,7 +14,7 @@
  *              Slider, 
  *              ProgressBar, 
  *              WindowBox,  -- DONE
- *              TabPane, 
+ *              TabPane,
  *              TitlebarButtons, 
  *              HeaderBar,
  *              DropDown,
@@ -26,16 +25,13 @@
  *              Do something with fonts, -- DONE
  *              
  *          )
- *
- *
+ *       3. Incribing elements into cellbox sometimes produces weird behaviours !!!
+ *       4. Implement element incribe functionality with struct member 
+ *       5. Refactor some rendering functions for simplier code 
+ *       6. Let the user change the shape of checkbox when clicked 
  */
 
 /* ELEMENTS include: Button, Button grid, Titlebar, Toggle, Label, CellBox, WindowBox */
-
-/* TODO: 1. Incribing elements into cellbox sometimes produces weird behaviours !!!
- *       2. Implement element incribe functionality with struct member 
- *       3. Refactor some rendering functions for simplier code 
- *       4. Let the user change the shape of checkbox when clicked */
 
 #ifndef RUIES_H_
 #define RUIES_H_
@@ -556,6 +552,7 @@ typedef struct {
 #define TOPRIGHTRECTPOINT(rect)    ((Ruies_Vec2_t){.x = rect.x + rect.width, .y = rect.y})
 #define BOTTOMLEFTRECTPOINT(rect)  ((Ruies_Vec2_t){.x = rect.x, .y = rect.y + rect.height})
 #define BOTTOMRIGHTRECTPOINT(rect) ((Ruies_Vec2_t){.x = rect.x + rect.width, .y = rect.y + rect.height})
+#define RECTWITHBORDER(rect, bw)   ((Ruies_Rect_t){.x = rect.x + bw, .y = rect.y + bw, .width = rect.width - (2.0f*(bw)), .height = rect.height - (2.0f*(bw))})
 
 #define HEX2RUIESCOLOR(hexval)     \
     ({                                                      \
@@ -787,8 +784,8 @@ Ruies_TitleBar_t make_titlebar(Ruies_Rect_t bounds, const char* text);
 /* NOTE: This function allocates memory for the buttons on the heap! 
  * You should call free_button_grid() after CloseWindow() */
 Ruies_ButtonGrid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows, uint32_t cols,
-                                Ruies_Rect_t sample_bounds, const char* text[],
-                                uint32_t horizontal_spacing, uint32_t vertical_spacing);
+                                    Ruies_Rect_t sample_bounds, const char* text[],
+                                    uint32_t horizontal_spacing, uint32_t vertical_spacing);
 Ruies_Toggle_t make_toggle(Ruies_Rect_t bounds, const char* text);
 Ruies_Label_t make_label(Ruies_Rect_t bounds, const char* text, uint32_t left_padding, uint32_t right_padding);
 Ruies_CellBox_t make_cellbox(Ruies_Rect_t bounds, uint32_t rows, uint32_t cols, uint32_t cell_margin);
@@ -853,11 +850,10 @@ void render_winbox(Ruies_WindowBox_t* winbox, Ruies_ElemState_t* state);
 bool render_checkbox(Ruies_CheckBox_t* checkbox, Ruies_ElemState_t* state);
 
 /* Internal functions for rendering */
-Ruies_Vec2_t __get_elem_with_border_pos(Ruies_Rect_t bounds, uint32_t border_width);
-Ruies_Vec2_t __get_elem_with_border_dims(Ruies_Rect_t bounds, uint32_t border_width);
+void ruies_draw_rect_with_border(Ruies_Rect_t bounds, uint32_t border_width, Ruies_Color_t border_color, Ruies_Color_t base_color);
 Ruies_Vec2_t __get_elem_text_pos(Ruies_Rect_t bounds, Font font, const char* text);
 Ruies_Vec2_t __get_text_pos_align(Ruies_Rect_t bounds, uint32_t left_padding, uint32_t right_padding, 
-                                    Ruies_TextAlignment_t text_align, Font font, float font_size, const char* text);
+                                  Ruies_TextAlignment_t text_align, Font font, float font_size, const char* text);
 
 int get_button_index_in_grid_by_its_id(Ruies_ButtonGrid_t button_grid, Ruies_ElemID_t id);
 
@@ -1628,17 +1624,11 @@ bool render_button(Ruies_Button_t* button, Ruies_ElemState_t* state) {
     else button->state = NORMAL;
 
     Ruies_Color_t border_color, base_color, text_color;
-    Ruies_Vec2_t border_bounds[2] = {
-        /* Position */
-        __get_elem_with_border_pos(button->bounds, button->style[ATTR_BORDER_WIDTH]),
-        /* Dimension */
-        __get_elem_with_border_dims(button->bounds, button->style[ATTR_BORDER_WIDTH]),
-    };
-    Ruies_Vec2_t text_pos = __get_elem_text_pos(button->bounds, button->font, button->text);
     get_style_colors(button->state, button->style, &border_color, &base_color, &text_color);
+
+    Ruies_Vec2_t text_pos = __get_elem_text_pos(button->bounds, button->font, button->text);
     /* Drawing */
-    DrawRectangleRec(RAYLIB_RECT(button->bounds), RAYLIB_COLOR(border_color));
-    DrawRectangleV(RAYLIB_VEC2(border_bounds[0]), RAYLIB_VEC2(border_bounds[1]), RAYLIB_COLOR(base_color));
+    ruies_draw_rect_with_border(button->bounds, button->style[ATTR_BORDER_WIDTH], border_color, base_color);
     DrawTextEx(button->font, button->text, RAYLIB_VEC2(text_pos), button->font_size, 0, RAYLIB_COLOR(text_color));
 
     __ruies_error = 0;
@@ -1711,17 +1701,10 @@ bool render_toggle(Ruies_Toggle_t* toggle, Ruies_ElemState_t* state) {
     else if (hover && clicked && toggle->state == CLICKED) toggle->state = NORMAL;
 
     Ruies_Color_t border_color, base_color, text_color;
-    Ruies_Vec2_t border_bounds[2] = {
-        /* Position */
-        __get_elem_with_border_pos(toggle->bounds, toggle->style[ATTR_BORDER_WIDTH]),
-        /* Dimension */
-        __get_elem_with_border_dims(toggle->bounds, toggle->style[ATTR_BORDER_WIDTH]),
-    };
     Ruies_Vec2_t text_pos = __get_elem_text_pos(toggle->bounds, toggle->font, toggle->text);
     get_style_colors(toggle->state, toggle->style, &border_color, &base_color, &text_color);
     /* Drawing */
-    DrawRectangleRec(RAYLIB_RECT(toggle->bounds), RAYLIB_COLOR(border_color));
-    DrawRectangleV(RAYLIB_VEC2(border_bounds[0]), RAYLIB_VEC2(border_bounds[1]), RAYLIB_COLOR(base_color));
+    ruies_draw_rect_with_border(toggle->bounds, toggle->style[ATTR_BORDER_WIDTH], border_color, base_color);
     DrawTextEx(toggle->font, toggle->text, RAYLIB_VEC2(text_pos), toggle->font_size, 0, RAYLIB_COLOR(text_color));
     __ruies_error = 0;
     if (state != NULL) *state = toggle->state;
@@ -1746,17 +1729,13 @@ void render_winbox(Ruies_WindowBox_t* winbox, Ruies_ElemState_t* state) {
     else if (hover && clicked) winbox->state = CLICKED;
     else winbox->state = NORMAL;
 
-    Ruies_Vec2_t border_pos[2] = {
-        __get_elem_with_border_pos(winbox->bounds, winbox->style[ATTR_BORDER_WIDTH]),
-        __get_elem_with_border_dims(winbox->bounds, winbox->style[ATTR_BORDER_WIDTH]),
-    };
-    DrawRectangleRec(RAYLIB_RECT(winbox->bounds), RAYLIB_COLOR(HEX2RUIESCOLOR(winbox->style[ATTR_BORDER_COLOR_NORMAL])));
-    DrawRectangleV(RAYLIB_VEC2(border_pos[0]), RAYLIB_VEC2(border_pos[1]), RAYLIB_COLOR(HEX2RUIESCOLOR(winbox->style[ATTR_BASE_COLOR_NORMAL])));
+    ruies_draw_rect_with_border(winbox->bounds, winbox->style[ATTR_BORDER_WIDTH], 
+                                HEX2RUIESCOLOR(winbox->style[ATTR_BORDER_COLOR_NORMAL]), 
+                                HEX2RUIESCOLOR(winbox->style[ATTR_BASE_COLOR_NORMAL]));
     if (winbox->border_style == DOUBLE_BORDER) {
-        DrawRectangleV(RAYLIB_VEC2(VEC2ADDVALUE(border_pos[0], winbox->style[ATTR_BORDER_GAP])), RAYLIB_VEC2(VEC2SUBVALUE(border_pos[1], 2.0f*winbox->style[ATTR_BORDER_GAP])), 
-                      RAYLIB_COLOR(HEX2RUIESCOLOR(winbox->style[ATTR_BORDER_COLOR_NORMAL])));
-        DrawRectangleV(RAYLIB_VEC2(VEC2ADDVALUE(border_pos[0], winbox->style[ATTR_BORDER_GAP]+winbox->style[ATTR_BORDER_WIDTH])),
-                       RAYLIB_VEC2(VEC2SUBVALUE(border_pos[1], 2.0f*(winbox->style[ATTR_BORDER_WIDTH]+winbox->style[ATTR_BORDER_GAP]))), RAYLIB_COLOR(HEX2RUIESCOLOR(winbox->style[ATTR_BASE_COLOR_NORMAL])));
+        ruies_draw_rect_with_border(RECTWITHBORDER(winbox->bounds, winbox->style[ATTR_BORDER_GAP]+winbox->style[ATTR_BORDER_WIDTH]), winbox->style[ATTR_BORDER_WIDTH], 
+                                    HEX2RUIESCOLOR(winbox->style[ATTR_BORDER_COLOR_NORMAL]), 
+                                    HEX2RUIESCOLOR(winbox->style[ATTR_BASE_COLOR_NORMAL]));
     }
     if (state != NULL) *state = winbox->state;
     __ruies_error = 0;
@@ -1771,12 +1750,7 @@ bool render_checkbox(Ruies_CheckBox_t* checkbox, Ruies_ElemState_t* state) {
     else if (hover && clicked && checkbox->state == CLICKED) checkbox->state = NORMAL;
 
     Ruies_Color_t border_color, base_color, text_color;
-    Ruies_Vec2_t border_bounds[2] = {
-        /* Position */
-        __get_elem_with_border_pos(checkbox->bounds, checkbox->style[ATTR_BORDER_WIDTH]),
-        /* Dimension */
-        __get_elem_with_border_dims(checkbox->bounds, checkbox->style[ATTR_BORDER_WIDTH]),
-    };
+
     Vector2 text_dims = MeasureTextEx(checkbox->font, checkbox->text, checkbox->font_size, 0);
     Ruies_Vec2_t text_pos;
     if (checkbox->text_pos == LEFT_SIDE) {
@@ -1802,11 +1776,9 @@ bool render_checkbox(Ruies_CheckBox_t* checkbox, Ruies_ElemState_t* state) {
     }
     get_style_colors(checkbox->state, checkbox->style, &border_color, &base_color, &text_color);
     /* Drawing */
-    DrawRectangleRec(RAYLIB_RECT(checkbox->bounds), RAYLIB_COLOR(border_color));
-    DrawRectangleV(RAYLIB_VEC2(border_bounds[0]), RAYLIB_VEC2(border_bounds[1]), RAYLIB_COLOR(base_color));
+    ruies_draw_rect_with_border(checkbox->bounds, checkbox->style[ATTR_BORDER_WIDTH], border_color, base_color);
     if (checkbox->state == CLICKED) {
-        DrawRectangleV(RAYLIB_VEC2(VEC2ADDVALUE(border_bounds[0], checkbox->style[ATTR_RECT_MARGIN])), 
-                       RAYLIB_VEC2(VEC2SUBVALUE(border_bounds[1], 2.0f*checkbox->style[ATTR_RECT_MARGIN])), RAYLIB_COLOR(border_color));
+        DrawRectangleRec(RAYLIB_RECT(RECTWITHBORDER(checkbox->bounds, checkbox->style[ATTR_RECT_MARGIN]+checkbox->style[ATTR_BORDER_WIDTH])), RAYLIB_COLOR(border_color));
     }
     DrawTextEx(checkbox->font, checkbox->text, RAYLIB_VEC2(text_pos), checkbox->font_size, 0, RAYLIB_COLOR(text_color));
     __ruies_error = 0;
@@ -1815,21 +1787,9 @@ bool render_checkbox(Ruies_CheckBox_t* checkbox, Ruies_ElemState_t* state) {
     else return false;
 } 
 /* Internal function to calculate the position of the boundsagle relative to border width */
-Ruies_Vec2_t __get_elem_with_border_pos(Ruies_Rect_t bounds, uint32_t border_width) {
-    Ruies_Vec2_t border_pos = {0};
-    border_pos.x = bounds.x+(float)border_width;
-    border_pos.y = bounds.y+(float)border_width;
-    __ruies_error = 0;
-    return border_pos;
-}
-
-/* Internal functin to calculate the dimensions of the boundsagle relative to border width */
-Ruies_Vec2_t __get_elem_with_border_dims(Ruies_Rect_t bounds, uint32_t border_width) {
-    Ruies_Vec2_t border_dims = {0};
-    border_dims.x = bounds.width-(2.0f*(float)border_width);
-    border_dims.y = bounds.height-(2.0f*(float)border_width);
-    __ruies_error = 0;
-    return border_dims;
+void ruies_draw_rect_with_border(Ruies_Rect_t bounds, uint32_t border_width, Ruies_Color_t border_color, Ruies_Color_t base_color) {
+    DrawRectangleRec(RAYLIB_RECT(bounds), RAYLIB_COLOR(border_color));
+    DrawRectangleRec(RAYLIB_RECT(RECTWITHBORDER(bounds, border_width)), RAYLIB_COLOR(base_color));
 }
 
 /* Internal function to calculate the text position of a button */

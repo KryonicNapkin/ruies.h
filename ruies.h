@@ -554,16 +554,6 @@ typedef struct {
 #define BOTTOMRIGHTRECTPOINT(rect) ((Ruies_Vec2_t){.x = rect.x + rect.width, .y = rect.y + rect.height})
 #define RECTWITHBORDER(rect, bw)   ((Ruies_Rect_t){.x = rect.x + bw, .y = rect.y + bw, .width = rect.width - (2.0f*(bw)), .height = rect.height - (2.0f*(bw))})
 
-#define HEX2RUIESCOLOR(hexval)     \
-    ({                                                      \
-        (Ruies_Color_t) {                                   \
-            .r = (unsigned char)(((hexval) >> 24) & 0xFF),  \
-            .g = (unsigned char)(((hexval) >> 16) & 0xFF),  \
-            .b = (unsigned char)(((hexval) >> 8) & 0xFF),   \
-            .a = (unsigned char)((hexval) & 0xFF),          \
-        };                                                  \
-    })
-
 typedef int32_t Ruies_ElemID_t;
 
 typedef enum {
@@ -804,11 +794,7 @@ void set_cellbox_cell_margin(Ruies_CellBox_t* cellbox, uint32_t cell_margin);
 void calculate_cells(Ruies_CellBox_t* cellbox);
 int relative_cellbox_id(int cols, int x, int y);
 
-void visualise_cells(Ruies_CellBox_t cellbox);
-
-/* Additional ways of creating elements */
-Ruies_Button_t make_button_from_button(Ruies_Button_t button, Ruies_Rect_t bounds, const char* text);
-Ruies_Toggle_t make_toggle_from_toggle(Ruies_Toggle_t toggle, Ruies_Rect_t bounds, const char* text);
+void visualize_cells(Ruies_CellBox_t cellbox);
 
 /* Label releated functions */
 void attach_label_to_elem(const void* elem, Ruies_ElementTypes_t type, Ruies_Label_t* label, Ruies_ElemAttachment_t attach_to);
@@ -862,6 +848,8 @@ void free_button_grid(Ruies_ButtonGrid_t button_grid);
 void free_cellbox(Ruies_CellBox_t cellbox);
 
 /* Miscellaneous functions */
+Ruies_Color_t ruies_hex2color(uint32_t hexval);
+uint32_t ruies_color2hex(Ruies_Color_t color);
 char* ruies_strdup(const char* str);
 
 #ifdef RUIES_IMPLEMENTATION
@@ -1408,7 +1396,7 @@ int relative_cellbox_id(int cols, int x, int y) {
     return (y*cols)+x;
 }
 
-void visualise_cells(Ruies_CellBox_t cellbox) {
+void visualize_cells(Ruies_CellBox_t cellbox) {
     for (int i = 0; i < cellbox.num_of_cells; ++i) {
         Ruies_Rect_t bounds = cellbox.cells[i].bounds;
 
@@ -1425,7 +1413,7 @@ void visualise_cells(Ruies_CellBox_t cellbox) {
         Vector2 end_pos3 = RAYLIB_VEC2(BOTTOMLEFTRECTPOINT(bounds));
         Vector2 end_pos4 = RAYLIB_VEC2(TOPRIGHTRECTPOINT(bounds));
 
-        Color color = RAYLIB_COLOR(HEX2RUIESCOLOR(__style.elem_styles[CELLBOX][ATTR_TEXT_COLOR_NORMAL]));
+        Color color = RAYLIB_COLOR(ruies_hex2color(__style.elem_styles[CELLBOX][ATTR_TEXT_COLOR_NORMAL]));
 
         DrawLineEx(start_pos_top_left, end_pos1, 1, color);
         DrawLineEx(start_pos_top_left, end_pos2, 1, color);
@@ -1436,27 +1424,6 @@ void visualise_cells(Ruies_CellBox_t cellbox) {
     __ruies_error = 0;
 }
 
-Ruies_Button_t make_button_from_button(Ruies_Button_t button, Ruies_Rect_t bounds, const char* text) {
-    Ruies_Button_t new_button;
-    memcpy(&new_button, &button, sizeof(Ruies_Button_t));
-    new_button.bounds = bounds;
-    new_button.text = ruies_strdup(text);
-    new_button.id = button.id + 1;
-    __current_elem_idx += 1;
-    __ruies_error = 0;
-    return new_button;
-}
-
-Ruies_Toggle_t make_toggle_from_toggle(Ruies_Toggle_t toggle, Ruies_Rect_t bounds, const char* text) {
-    Ruies_Toggle_t new_toggle;
-    memcpy(&new_toggle, &toggle, sizeof(Ruies_Button_t));
-    new_toggle.bounds = bounds;
-    new_toggle.text = ruies_strdup(text);
-    new_toggle.id = toggle.id + 1;
-    __current_elem_idx += 1;
-    __ruies_error = 0;
-    return new_toggle;
-}
 /* Label releated functions */
 void attach_label_to_elem(const void* elem, Ruies_ElementTypes_t type, Ruies_Label_t* label, Ruies_ElemAttachment_t attach_to) {
     Ruies_Rect_t elem_bounds = {0};
@@ -1525,9 +1492,9 @@ uint32_t get_style_value(Ruies_ElementTypes_t elem, Ruies_ElemAttr_t attr) {
 }
 
 void get_style_colors(Ruies_ElemState_t state, uint32_t* style, Ruies_Color_t* border, Ruies_Color_t* base, Ruies_Color_t* text) {
-    if (border != NULL) *border = HEX2RUIESCOLOR(style[state*3]);
-    if (base != NULL) *base = HEX2RUIESCOLOR(style[(state*3)+1]);
-    if (text != NULL) *text = HEX2RUIESCOLOR(style[(state*3)+2]);
+    if (border != NULL) *border = ruies_hex2color(style[state*3]);
+    if (base != NULL) *base = ruies_hex2color(style[(state*3)+1]);
+    if (text != NULL) *text = ruies_hex2color(style[(state*3)+2]);
     __ruies_error = 0;
 }
 
@@ -1669,9 +1636,9 @@ void render_titlebar(Ruies_TitleBar_t titlebar) {
     Ruies_Vec2_t text_pos = __get_text_pos_align(titlebar.bounds, titlebar.style[ATTR_LEFT_PADDING], titlebar.style[ATTR_RIGHT_PADDING], 
                                             (Ruies_TextAlignment_t)titlebar.style[ATTR_TEXT_ALIGNMENT], titlebar.font, titlebar.font_size, 
                                             titlebar.text);
-    Ruies_Color_t border_color_normal = HEX2RUIESCOLOR(titlebar.style[ATTR_BORDER_COLOR_NORMAL]);
+    Ruies_Color_t border_color_normal = ruies_hex2color(titlebar.style[ATTR_BORDER_COLOR_NORMAL]);
 
-    DrawRectangleRec(RAYLIB_RECT(titlebar.bounds), RAYLIB_COLOR(HEX2RUIESCOLOR(titlebar.style[ATTR_BASE_COLOR_NORMAL])));
+    DrawRectangleRec(RAYLIB_RECT(titlebar.bounds), RAYLIB_COLOR(ruies_hex2color(titlebar.style[ATTR_BASE_COLOR_NORMAL])));
     if (titlebar.border_widths.left_border_width > 0) {
         DrawRectangle(titlebar.bounds.x, titlebar.bounds.y, titlebar.border_widths.left_border_width, 
                       titlebar.bounds.height, RAYLIB_COLOR(border_color_normal));
@@ -1688,7 +1655,7 @@ void render_titlebar(Ruies_TitleBar_t titlebar) {
         DrawRectangle(titlebar.bounds.x, titlebar.bounds.y+(titlebar.bounds.height-titlebar.border_widths.bottom_border_width), titlebar.bounds.width, 
                       titlebar.border_widths.bottom_border_width, RAYLIB_COLOR(border_color_normal));
     }
-    DrawTextEx(titlebar.font, titlebar.text, RAYLIB_VEC2(text_pos), titlebar.font_size, 0, RAYLIB_COLOR(HEX2RUIESCOLOR(titlebar.style[ATTR_TEXT_COLOR_NORMAL])));
+    DrawTextEx(titlebar.font, titlebar.text, RAYLIB_VEC2(text_pos), titlebar.font_size, 0, RAYLIB_COLOR(ruies_hex2color(titlebar.style[ATTR_TEXT_COLOR_NORMAL])));
     __ruies_error = 0;
 }
 
@@ -1716,7 +1683,7 @@ void render_label(Ruies_Label_t label) {
     Ruies_Vec2_t text_pos = __get_text_pos_align(label.bounds, label.style[ATTR_LEFT_PADDING], 
                                             label.style[ATTR_RIGHT_PADDING], (Ruies_TextAlignment_t)label.style[ATTR_TEXT_ALIGNMENT],
                                             label.font, label.font_size, label.text);
-    Ruies_Color_t text_color = RUIES_COLOR(HEX2RUIESCOLOR(label.style[ATTR_TEXT_COLOR_NORMAL]));
+    Ruies_Color_t text_color = RUIES_COLOR(ruies_hex2color(label.style[ATTR_TEXT_COLOR_NORMAL]));
     /* Drawing */
     DrawTextEx(label.font, label.text, RAYLIB_VEC2(text_pos), label.font_size, 0, RAYLIB_COLOR(text_color));
     __ruies_error = 0;
@@ -1730,12 +1697,12 @@ void render_winbox(Ruies_WindowBox_t* winbox, Ruies_ElemState_t* state) {
     else winbox->state = NORMAL;
 
     ruies_draw_rect_with_border(winbox->bounds, winbox->style[ATTR_BORDER_WIDTH], 
-                                HEX2RUIESCOLOR(winbox->style[ATTR_BORDER_COLOR_NORMAL]), 
-                                HEX2RUIESCOLOR(winbox->style[ATTR_BASE_COLOR_NORMAL]));
+                                ruies_hex2color(winbox->style[ATTR_BORDER_COLOR_NORMAL]), 
+                                ruies_hex2color(winbox->style[ATTR_BASE_COLOR_NORMAL]));
     if (winbox->border_style == DOUBLE_BORDER) {
         ruies_draw_rect_with_border(RECTWITHBORDER(winbox->bounds, winbox->style[ATTR_BORDER_GAP]+winbox->style[ATTR_BORDER_WIDTH]), winbox->style[ATTR_BORDER_WIDTH], 
-                                    HEX2RUIESCOLOR(winbox->style[ATTR_BORDER_COLOR_NORMAL]), 
-                                    HEX2RUIESCOLOR(winbox->style[ATTR_BASE_COLOR_NORMAL]));
+                                    ruies_hex2color(winbox->style[ATTR_BORDER_COLOR_NORMAL]), 
+                                    ruies_hex2color(winbox->style[ATTR_BASE_COLOR_NORMAL]));
     }
     if (state != NULL) *state = winbox->state;
     __ruies_error = 0;
@@ -1846,6 +1813,29 @@ void free_button_grid(Ruies_ButtonGrid_t button_grid) {
 void free_cellbox(Ruies_CellBox_t cellbox) {
     free(cellbox.cells);
     __ruies_error = 0;
+}
+
+/* Miscellaneous functions */
+Ruies_Color_t ruies_hex2color(uint32_t hexval) {
+    Ruies_Color_t color = {0};
+    color = (Ruies_Color_t){
+        .r = (unsigned char)(((hexval) >> 24) & 0xFF),
+        .g = (unsigned char)(((hexval) >> 16) & 0xFF),
+        .b = (unsigned char)(((hexval) >> 8) & 0xFF),
+        .a = (unsigned char)((hexval) & 0xFF),
+    };                                                
+    __ruies_error = 0;
+    return color;
+}
+
+uint32_t ruies_color2hex(Ruies_Color_t color) {
+    uint32_t hexcolor = 0;
+    hexcolor = (uint32_t)(((uint32_t)color.r << 24) |
+                       ((uint32_t)color.g << 16) |
+                       ((uint32_t)color.b << 8) |
+                        (uint32_t)color.a);
+    __ruies_error = 0;
+    return hexcolor;
 }
 
 /* Custom strdup function */

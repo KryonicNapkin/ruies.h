@@ -1518,7 +1518,7 @@ void set_global_style_attr(Ruies_ElemAttr_t attr, uint32_t value) {
 }
 
 uint32_t* get_style(Ruies_ElementTypes_t elem, int* size) {
-    *size = sizeof(__style.elem_styles[elem])/sizeof(__style.elem_styles[elem][0]);
+    if (size != NULL) *size = sizeof(__style.elem_styles[elem])/sizeof(__style.elem_styles[elem][0]);
     __ruies_error = 0;
     return __style.elem_styles[elem];
 }

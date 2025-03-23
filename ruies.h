@@ -5,13 +5,14 @@
  *     Created by: KryonicNapkin        - https://www.github.com/KryonicNapkin/ruies.h
  *     Credit: raysan5's raygui library - https://www.github.com/raysan5/raygui
  */
+
 /* NOTE: You NEED to include raylib.h before including this library */
 
 /* 
  * TODO: 1. Make more elements (
  *              CheckBox -- DONE, 
  *              OptionList, 
- *              Slider, 
+ *              Slider -- PAUSED, 
  *              ProgressBar, 
  *              WindowBox,  -- DONE
  *              TabPane,
@@ -20,18 +21,18 @@
  *              DropDown,
  *              ...
  *          )
- *       2. Rework the style system (
+ *       2. Special element - Ruies_Indicator_t -- DONE
+ *       3. Rework the style system (
  *              Loading a custom style for different Elements,
  *              Do something with fonts, -- DONE
- *              
  *          )
- *       3. Incribing elements into cellbox sometimes produces weird behaviours !!!
- *       4. Implement element incribe functionality with struct member 
- *       5. Refactor some rendering functions for simplier code 
+ *       4. Rework inscribing elements into cellbox !!!
+ *       5. Refactor some rendering functions
  *       6. Let the user change the shape of checkbox when clicked 
+ *       7. Add functions to deal with text+padding
  */
 
-/* ELEMENTS include: Button, Button grid, Titlebar, Toggle, Label, CellBox, WindowBox */
+/* ELEMENTS include: Button, Button grid, Titlebar, Toggle, Label, CellBox, WindowBox, CheckBox */
 
 #ifndef RUIES_H_
 #define RUIES_H_
@@ -42,7 +43,7 @@
 #ifndef USE_CUSTOM_FONT
 /* Default font */
 
-////////////////////////////////////////////////////////////////////////////////////////                                                                                    //
+////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                    //
 // Font name:    PixeloidSans-mLxMn.ttf                                               //
 // Font creator: GGBotNet                                                             //
@@ -497,7 +498,7 @@ static Font RuiesLoadDefaultFont(void) {
 }
 #endif /* ifndef USE_CUSTOM_FONT */
 
-#define MAX_ELEMENTS_COUNT     8
+#define MAX_ELEMENTS_COUNT     9
 #define MAX_ELEMENT_ATTRIBUTES 17
 
 typedef struct {
@@ -520,39 +521,36 @@ typedef struct {
 } Ruies_Vec2_t;
 
 typedef struct {
-    float x;
-    float y;
-} Ruies_Pos_t;
-
-typedef struct {
-    float width;
-    float height;
-} Ruies_Dimensions_t;
-
-typedef struct {
     unsigned char r;
     unsigned char g;
     unsigned char b;
     unsigned char a;
 } Ruies_Color_t; 
 
+#define RUIES_LOG_RECT(rect)       (fprintf(stdout, "-- RUIES: x: %f, y: %f, width: %f, height: %f\n", rect.x, rect.y, rect.width, rect.height))
+#define RUIES_LOG_VEC(vec)         (fprintf(stdout, "-- RUIES: x: %f, y: %f\n", vec.x, vec.y))
+#define RUIES_LOG_STATE(e)         (fprintf(stdout, "-- RUIES: state: %d\n", e.state))
+
 #define RUIES_RECT(rayrect)        ((Ruies_Rect_t){.x = rayrect.x, .y = rayrect.y, .width = rayrect.width, .height = rayrect.height})
 #define RUIES_COLOR(raycolor)      ((Ruies_Color_t){.r = raycolor.r, .g = raycolor.g, .b = raycolor.b, .a = raycolor.a})
 #define RUIES_VEC2(rayvec2)        ((Ruies_Vec2_t){.x = rayvec2.x, .y = rayvec2.y})
-#define RUIES_POSRECT(rect)        ((Ruies_Pos_t){.x = rect.x, .y = rect.y})
-#define RUIES_DIMSRECT(rect)       ((Ruies_Dimensions_t){.width = rect.width, .height = rect.height})
+#define RUIES_VEC_POSRECT(rect)    ((Ruies_Vec2_t){.x = rect.x, .y = rect.y})
+#define RUIES_VEC_DIMSRECT(rect)   ((Ruies_Vec2_t){.x = rect.width, .y = rect.height})
+#define RUIES_CENTERPOINT(rect)    ((Ruies_Vec2_t){.x = rect.x+(rect.width/2.0f), .y = rect.y+(rect.height/2.0f)})
 
 #define RAYLIB_RECT(ruiesrect)     ((Rectangle){.x = ruiesrect.x, .y = ruiesrect.y, .width = ruiesrect.width, .height = ruiesrect.height})
 #define RAYLIB_COLOR(ruiescolor)   ((Color){.r = ruiescolor.r, .g = ruiescolor.g, .b = ruiescolor.b, .a = ruiescolor.a})
 #define RAYLIB_VEC2(ruiesvec2)     ((Vector2){.x = ruiesvec2.x, .y = ruiesvec2.y})
 /* Some math operations */
-#define VEC2ADDVALUE(v, val)       ((Ruies_Vec2_t){.x = v.x + (float)val, .y = v.y + (float)val})
-#define VEC2SUBVALUE(v, val)       ((Ruies_Vec2_t){.x = v.x - (float)val, .y = v.y - (float)val})
+#define VEC2ADDVALUE(v, val)       ((Ruies_Vec2_t){.x = v.x + (float)(val), .y = v.y + (float)(val)})
+#define VEC2SUBVALUE(v, val)       ((Ruies_Vec2_t){.x = v.x - (float)(val), .y = v.y - (float)(val)})
 #define TOPLEFTRECTPOINT(rect)     ((Ruies_Vec2_t){.x = rect.x, .y = rect.y})
 #define TOPRIGHTRECTPOINT(rect)    ((Ruies_Vec2_t){.x = rect.x + rect.width, .y = rect.y})
 #define BOTTOMLEFTRECTPOINT(rect)  ((Ruies_Vec2_t){.x = rect.x, .y = rect.y + rect.height})
 #define BOTTOMRIGHTRECTPOINT(rect) ((Ruies_Vec2_t){.x = rect.x + rect.width, .y = rect.y + rect.height})
-#define RECTWITHBORDER(rect, bw)   ((Ruies_Rect_t){.x = rect.x + bw, .y = rect.y + bw, .width = rect.width - (2.0f*(bw)), .height = rect.height - (2.0f*(bw))})
+#define RECTWITHBORDER(rect, bw)   ((Ruies_Rect_t){.x = rect.x + ((float)bw), .y = rect.y + ((float)bw), .width = rect.width - (2.0f*((float)bw)), .height = rect.height - (2.0f*((float)bw))})
+
+#define RUIES_ERROR_OUT()          ({(__ruies_error) = 1; return;})
 
 typedef int32_t Ruies_ElemID_t;
 
@@ -565,6 +563,7 @@ typedef enum {
     CELLBOX,
     WINBOX,
     CHECKBOX,
+    INDICATOR,
 } Ruies_ElementTypes_t;
 
 typedef enum {
@@ -586,10 +585,10 @@ typedef enum {
 } Ruies_WindowBoxStyles_t;
 
 typedef enum {
-    TO_THE_LEFT = 0,
-    TO_THE_RIGHT,
-    ON_TOP,
-    TO_BOTTOM
+    ATTACH_LEFT = 0,
+    ATTACH_RIGHT,
+    ATTACH_TOP,
+    ATTACH_BOTTOM
 } Ruies_ElemAttachment_t;
 
 typedef enum {
@@ -598,6 +597,13 @@ typedef enum {
     UP,
     DOWN,
 } Ruies_Sides_t;
+
+typedef enum {
+    TEXT_LEFT = 0,
+    TEXT_RIGHT,
+    TEXT_UP,
+    TEXT_DOWN
+} Ruies_TextPlacement_t;
 
 /* Button attributes for the button_grid function */
 typedef enum {
@@ -624,6 +630,13 @@ typedef enum {
     ATTR_RECT_MARGIN,
     ATTR_BORDER_GAP,
 } Ruies_ElemAttr_t;
+
+/* Numbers explictly marked down for the compatibility with Ruies_ElemState_t type*/
+typedef enum {
+    INDICATOR_OFF = 0,
+    INDICATOR_ON = 2,
+    INDICATOR_BLINKING = 3,
+} Ruies_IndicatorState_t;
 
 /*------------------------------------------------------------*/
 /*----------------------    ELEMENTS    ----------------------*/
@@ -705,7 +718,7 @@ typedef struct {
     Ruies_Rect_t bounds;
     uint32_t cell_rows;
     uint32_t cell_cols;
-    int32_t num_of_cells;
+    uint32_t num_of_cells;
     uint32_t cell_margin;
     Ruies_CellBoxCell_t* cells;
     int number_of_inscribed_elems;
@@ -726,10 +739,30 @@ typedef struct {
     char* text;
     Font font;
     float font_size;
-    Ruies_Sides_t text_pos;
+    Ruies_TextPlacement_t text_pos;
     Ruies_ElemState_t state;
     bool is_inscribed_in_cell;
 } Ruies_CheckBox_t;
+
+typedef struct {
+    Ruies_ElemID_t id;
+    Ruies_Vec2_t pos;
+    float radius;
+    uint32_t style[MAX_ELEMENT_ATTRIBUTES];
+    char* text;
+    Font font;
+    float font_size;
+    Ruies_TextPlacement_t text_placement;
+    Ruies_IndicatorState_t state;
+    float blink_interval;               /* times per sec */
+} Ruies_Indicator_t;
+
+typedef struct {
+    uint32_t from_left;
+    uint32_t from_right;
+    uint32_t from_top;
+    uint32_t from_bottom;
+} Ruies_Padding_t;
 
 /* Default values for the global style */
 #define BORDER_COLOR_NORMAL  0x282C34FF
@@ -747,11 +780,11 @@ typedef struct {
 #define __BORDER_WIDTH       1
 
 #ifndef USE_CUSTOM_FONT
-    #define RUIES_FONT_FONT  RuiesLoadDefaultFont()
+    #define RUIES_FONT       RuiesLoadDefaultFont()
     #define RUIES_FONT_SIZE  25                      /* Set font size */
 #endif
 
-#define RUIES_FONT           ((Font){0})
+#define EMPTY_FONT           ((Font){0})
 
 /*-------------------------------------------------------------*/
 /*-----------------   FUNCTION DECLARATIONS   -----------------*/
@@ -780,18 +813,22 @@ Ruies_Toggle_t make_toggle(Ruies_Rect_t bounds, const char* text);
 Ruies_Label_t make_label(Ruies_Rect_t bounds, const char* text, uint32_t left_padding, uint32_t right_padding);
 Ruies_CellBox_t make_cellbox(Ruies_Rect_t bounds, uint32_t rows, uint32_t cols, uint32_t cell_margin);
 Ruies_WindowBox_t make_winbox(Ruies_Rect_t bounds, Ruies_WindowBoxStyles_t border_style);
-Ruies_CheckBox_t make_checkbox(Ruies_Pos_t pos, float square_size, const char* text, Ruies_Sides_t text_atached_to);
+Ruies_CheckBox_t make_checkbox(Ruies_Vec2_t pos, float square_size, const char* text, Ruies_TextPlacement_t text_atached_to);
+Ruies_Indicator_t make_indicator(Ruies_Vec2_t center_pos, float radius, const char* text, Ruies_TextPlacement_t text_pos, Ruies_IndicatorState_t init_state);
+
+/* Indicator manipulation functions */
+void set_indicator_on(Ruies_Indicator_t* indicator);
+void set_indicator_off(Ruies_Indicator_t* indicator);
+void set_indicator_onoff(Ruies_Indicator_t* indicator);
+void set_indicator_blink(Ruies_Indicator_t* indicator, float blink_interval);
  
 /* Cellbox releated functions */
-void merge_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_Sides_t side, int idx1);
-void merge_n_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_Sides_t side, int idx1, int n);
-void split_cell_horizontaly(Ruies_CellBox_t* cellbox, int idx);
-void split_cell_verticaly(Ruies_CellBox_t* cellbox, int idx);
-void inscribe_elem_into_cell(const void* elem, Ruies_ElementTypes_t type, Ruies_CellBox_t* cellbox, int cell_id);
-/* void inscribe_elem_into_cell_relative_side(const void* elem, ElementTypes_t type, CellBox_t* cellbox, cellbox_sides_t from, int how_much, int vertical_pos); */
+int cell_pos_cellbox(Ruies_CellBox_t cellbox, int id);
+void inscribe_button_into_cell(Ruies_Button_t* button, Ruies_CellBox_t* cellbox, int cell_idx);
+void inscribe_toggle_into_cell(Ruies_Toggle_t* toggle, Ruies_CellBox_t* cellbox, int cell_idx);
 void insert_cellbox_into_window_box(Ruies_CellBox_t* cellbox, Ruies_WindowBox_t winbox);
 void set_cellbox_cell_margin(Ruies_CellBox_t* cellbox, uint32_t cell_margin);
-void calculate_cells(Ruies_CellBox_t* cellbox);
+void calculate_cells(Ruies_CellBoxCell_t** cells, Ruies_Rect_t cellbox_bounds, uint32_t cols, uint32_t rows, float cell_margin);
 int relative_cellbox_id(int cols, int x, int y);
 
 void visualize_cells(Ruies_CellBox_t cellbox);
@@ -814,6 +851,7 @@ void set_toggle_style_attr(Ruies_Toggle_t* toggle, Ruies_ElemAttr_t attr, uint32
 void set_label_style_attr(Ruies_Label_t* label, Ruies_ElemAttr_t attr, uint32_t value);
 void set_winbox_style_attr(Ruies_WindowBox_t* winbox, Ruies_ElemAttr_t attr, uint32_t value);
 void set_checkbox_style_attr(Ruies_CheckBox_t* checkbox, Ruies_ElemAttr_t attr, uint32_t value);
+void set_indicator_style_attr(Ruies_Indicator_t* indic, Ruies_ElemAttr_t attr, uint32_t value);
 
 /* ButtonGrid alignment functions */
 void stretch_button_grid_horiz(Ruies_ButtonGrid_t* button_grid, uint32_t horizontal_spacing, uint32_t until_x);
@@ -834,12 +872,16 @@ void render_label(Ruies_Label_t label);
 void render_winbox(Ruies_WindowBox_t* winbox, Ruies_ElemState_t* state);
 /* CheckBox rendering function */
 bool render_checkbox(Ruies_CheckBox_t* checkbox, Ruies_ElemState_t* state);
+/* Indicator rendering function */
+void render_indicator(Ruies_Indicator_t indic, Ruies_IndicatorState_t* state);
 
 /* Internal functions for rendering */
 void ruies_draw_rect_with_border(Ruies_Rect_t bounds, uint32_t border_width, Ruies_Color_t border_color, Ruies_Color_t base_color);
 Ruies_Vec2_t __get_elem_text_pos(Ruies_Rect_t bounds, Font font, const char* text);
 Ruies_Vec2_t __get_text_pos_align(Ruies_Rect_t bounds, uint32_t left_padding, uint32_t right_padding, 
                                   Ruies_TextAlignment_t text_align, Font font, float font_size, const char* text);
+Ruies_Vec2_t __get_text_placement_pos(Ruies_Rect_t elem_bounds, Ruies_Padding_t padding, Ruies_TextPlacement_t text_placement, 
+                                      Font font, float font_size, const char* text);
 
 int get_button_index_in_grid_by_its_id(Ruies_ButtonGrid_t button_grid, Ruies_ElemID_t id);
 
@@ -989,19 +1031,33 @@ static Ruies_GlobalStyle_t __style = {
         //      rect_margin           border_gap
               __BORDER_WIDTH,             0,
         }, 
+        /* --------------------------------- INDICATOR ----------------------------------- */
+        {//    border_normal         base_normal         text_normal
+            BORDER_COLOR_NORMAL,  BASE_COLOR_NORMAL,   TEXT_COLOR_NORMAL, // state: NORMAL/OFF  
+        //     border_focused        base_focused        text_focused
+            BORDER_COLOR_FOCUSED,  BASE_COLOR_FOCUSED, TEXT_COLOR_FOCUSED, // state: !!UNUSED!!
+        //     border_clicked        base_clicked        text_clicked
+            BORDER_COLOR_CLICKED,     0xE06C75FF,     TEXT_COLOR_CLICKED, // state: CLICKED/ON
+        //      border_width        text_alignment
+               __BORDER_WIDTH,        ALIGN_LEFT,
+        //      left_padding         right_padding       top_padding       bottom_padding
+                     5,                   5,                  5,                 5,       
+        //      rect_margin           border_gap
+                     0,                   0,
+        }, 
     },
-    /*                  BUTTON         BUTTON_GRID       TITLEBAR          TOGGLE            LABEL           CELLBOX         WINDOWBOX       CHECKBOX   */
-    .fonts = {        RUIES_FONT,      RUIES_FONT,      RUIES_FONT,      RUIES_FONT,      RUIES_FONT,      RUIES_FONT,      RUIES_FONT,     RUIES_FONT},
+    /*                  BUTTON         BUTTON_GRID       TITLEBAR          TOGGLE            LABEL           CELLBOX         WINDOWBOX       CHECKBOX        INDICATOR */
+    .fonts = {        EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,     EMPTY_FONT,      EMPTY_FONT},
     #ifndef USE_CUSTOM_FONT
-    .font_sizes = {RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE},
-    #else 
-    .font_sizes = {       0,               0,               0,               0,               0,               0,               0,               0},
+    .font_sizes = {RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE},
+    #else
+    .font_sizes = {       0,               0,               0,               0,               0,               0,               0,               0,                0},
     #endif
 };
 
 #ifndef USE_CUSTOM_FONT
     void ruies_load_default_font(void) {
-        Font ruies_font = RUIES_FONT_FONT;
+        Font ruies_font = RUIES_FONT;
         for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
             __style.fonts[i] = ruies_font;
             __style.font_sizes[i] = RUIES_FONT_SIZE;
@@ -1013,7 +1069,7 @@ static Ruies_GlobalStyle_t __style = {
     Font ruies_extract_default_font(void) {
         __ruies_error = 0;
         if (__global_font_loaded) return __global_reserved_font;
-        else return RUIES_FONT_FONT;
+        else return RUIES_FONT;
     }
 #else 
     void ruies_load_custom_font(Font font, float font_size) {
@@ -1042,6 +1098,7 @@ Ruies_Button_t make_button(Ruies_Rect_t bounds, const char* text) {
     Ruies_Button_t btn = {0};
     /* Assaign a unique id to a button */
     btn.id = (!__current_elem_idx ? 0 : __current_elem_idx+1);
+    __current_elem_idx += 1;
     btn.bounds = bounds;
 
     /* Check if user didn't provided any title to the function */
@@ -1057,7 +1114,6 @@ Ruies_Button_t make_button(Ruies_Rect_t bounds, const char* text) {
     btn.font_size = __style.font_sizes[BUTTON];
     btn.state = NORMAL;
     btn.is_inscribed_in_cell = false;
-    __current_elem_idx += 1;
     __ruies_error = 0;
     return btn;
 }
@@ -1067,6 +1123,7 @@ Ruies_TitleBar_t make_titlebar(Ruies_Rect_t bounds, const char* text) {
     Ruies_TitleBar_t titlebar = {0};
     /* Assaign an unique id to every created titlebar */
     titlebar.id = (!__current_elem_idx ? 0 : __current_elem_idx+1);
+    __current_elem_idx += 1;
     titlebar.bounds = bounds;
     /* Check if no title was provided */
     if (text != NULL) {
@@ -1084,7 +1141,6 @@ Ruies_TitleBar_t make_titlebar(Ruies_Rect_t bounds, const char* text) {
     memcpy(&titlebar.style, &__style.elem_styles[TITLEBAR], sizeof(uint32_t)*MAX_ELEMENT_ATTRIBUTES);
     titlebar.font = __style.fonts[TITLEBAR];
     titlebar.font_size = __style.font_sizes[TITLEBAR];
-    __current_elem_idx += 1;
     __ruies_error = 0;
     return titlebar;
 }
@@ -1149,6 +1205,7 @@ Ruies_ButtonGrid_t make_button_grid(uint32_t posx, uint32_t posy, uint32_t rows,
 Ruies_Toggle_t make_toggle(Ruies_Rect_t bounds, const char* text) {
     Ruies_Toggle_t toggle = {0};
     toggle.id = (!__current_elem_idx ? 0 : __current_elem_idx+1);
+    __current_elem_idx += 1;
     toggle.bounds = bounds;
 
     if (text != NULL) {
@@ -1163,7 +1220,6 @@ Ruies_Toggle_t make_toggle(Ruies_Rect_t bounds, const char* text) {
     toggle.font_size = __style.font_sizes[TOGGLE];
     toggle.state = NORMAL;
     toggle.is_inscribed_in_cell = false;
-    __current_elem_idx += 1;
     __ruies_error = 0;
     return toggle;
 }
@@ -1171,6 +1227,7 @@ Ruies_Toggle_t make_toggle(Ruies_Rect_t bounds, const char* text) {
 Ruies_Label_t make_label(Ruies_Rect_t bounds, const char* text, uint32_t left_padding, uint32_t right_padding) {
     Ruies_Label_t label = {0};
     label.id = (!__current_elem_idx ? 0 : __current_elem_idx+1);
+    __current_elem_idx += 1;
     label.bounds = bounds;
 
     if (text != NULL) {
@@ -1186,7 +1243,6 @@ Ruies_Label_t make_label(Ruies_Rect_t bounds, const char* text, uint32_t left_pa
     label.font = __style.fonts[LABEL];
     label.font_size = __style.font_sizes[LABEL];
     label.is_inscribed_in_cell = false;
-    __current_elem_idx += 1;
     __ruies_error = 0;
     return label;
 }
@@ -1202,17 +1258,17 @@ Ruies_CellBox_t make_cellbox(Ruies_Rect_t bounds, uint32_t rows, uint32_t cols, 
     cellbox.bounds = bounds;
 
     int32_t size = rows*cols;
-    Ruies_CellBoxCell_t* cells = malloc(size * sizeof(Ruies_CellBoxCell_t));
+    Ruies_CellBoxCell_t* cells = calloc(size, sizeof(Ruies_CellBoxCell_t)); 
     cellbox.cells = cells;
     cellbox.cell_margin = cell_margin;
     cellbox.cell_cols = cols;
     cellbox.cell_rows = rows;
     cellbox.num_of_cells = size;
 
+    calculate_cells(&cellbox.cells, cellbox.bounds, cellbox.cell_cols, cellbox.cell_rows, cellbox.cell_margin);
     for (uint32_t i = 0; i < size; ++i) {
         cellbox.cells[i].id = i;
     }
-    calculate_cells(&cellbox);
 
     cellbox.number_of_inscribed_elems = 0;
     __ruies_error = 0;
@@ -1235,7 +1291,7 @@ Ruies_WindowBox_t make_winbox(Ruies_Rect_t bounds, Ruies_WindowBoxStyles_t borde
     return winbox;
 }
 
-Ruies_CheckBox_t make_checkbox(Ruies_Pos_t pos, float square_size, const char* text, Ruies_Sides_t text_atached_to) {
+Ruies_CheckBox_t make_checkbox(Ruies_Vec2_t pos, float square_size, const char* text, Ruies_TextPlacement_t text_atached_to) {
     Ruies_CheckBox_t checkbox = {0};
     checkbox.id = (!__current_elem_idx ? 0 : __current_elem_idx+1);
     __current_elem_idx += 1;
@@ -1262,86 +1318,78 @@ Ruies_CheckBox_t make_checkbox(Ruies_Pos_t pos, float square_size, const char* t
     return checkbox;
 }
 
-/* NOTE: Halted further development on this functionality because of my luck of knowledge */
-/* TODO: Make this function work */
-void merge_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_Sides_t side, int idx1) {
-    bool good_id = false;
-    for (int i = 0; i < cellbox->num_of_cells; ++i) {
-        if (cellbox->cells[i].id == idx1) {
-            good_id = true;
-            break;
-        }
+Ruies_Indicator_t make_indicator(Ruies_Vec2_t center_pos, float radius, const char* text, Ruies_TextPlacement_t text_pos, Ruies_IndicatorState_t init_state) {
+    Ruies_Indicator_t indicator = {0};
+    indicator.id = (!__current_elem_idx ? 0 : __current_elem_idx+1);
+    __current_elem_idx += 1;
+    indicator.pos = center_pos;
+    indicator.radius = radius;
+
+    if (text != NULL) {
+        indicator.text = ruies_strdup(text);
+    } else {
+        __ruies_error = 1;
+        return indicator;
     }
-    if (!good_id) __ruies_error = 1;
-    else {
-        int next_cell_id = 0;
-        Ruies_Rect_t cell_new_bounds = {0};
-        switch (side) {
-            case LEFT_SIDE:
-                next_cell_id = idx1-1;
-                break;
-            case RIGHT_SIDE:
-                next_cell_id = idx1+1;
-                break;
-            case UP:
-                next_cell_id = idx1-cellbox->cell_cols;
-                break;
-            case DOWN:
-                next_cell_id = idx1+cellbox->cell_cols;
-                break;
-            default:
-                __ruies_error = 1;
-                break;
-        }
-        cellbox->cells[next_cell_id].id = -1;
-        cellbox->cells[next_cell_id].bounds = (Ruies_Rect_t){0};
-        cellbox->cells[next_cell_id].is_inscribed_elem = true;
-        __ruies_error = 0;
-    }
+
+    memcpy(&indicator.style, &__style.elem_styles[INDICATOR], MAX_ELEMENT_ATTRIBUTES * sizeof(uint32_t));
+    indicator.font = __style.fonts[INDICATOR];
+    indicator.font_size = __style.font_sizes[INDICATOR];
+    indicator.text_placement = text_pos;
+    indicator.state = init_state;
+
+    __ruies_error = 0;
+    return indicator;
 }
 
-void merge_n_neighbouring_cells(Ruies_CellBox_t* cellbox, Ruies_Sides_t side, int idx1, int n) {
-
+void set_indicator_on(Ruies_Indicator_t* indicator) {
+    if (indicator->state != INDICATOR_ON) indicator->state = INDICATOR_ON;
 }
 
-void split_cell_horizontaly(Ruies_CellBox_t* cellbox, int idx);
-void split_cell_verticaly(Ruies_CellBox_t* cellbox, int idx);
+void set_indicator_off(Ruies_Indicator_t* indicator) {
+    if (indicator->state != INDICATOR_OFF) indicator->state = INDICATOR_OFF;
+}
 
-void inscribe_elem_into_cell(const void* elem, Ruies_ElementTypes_t type, Ruies_CellBox_t* cellbox, int cell_idx) {
-    Ruies_Rect_t elem_bounds;
-    bool found = false;
-    int cell_num = 0;
-    for (uint32_t i = 0; i < cellbox->num_of_cells; ++i) {
-        if (cellbox->cells[i].id == cell_idx) {
-            cell_num = i;
-            elem_bounds = cellbox->cells[cell_num].bounds;
-            found = true;
-            break;
-        }
+void set_indicator_onoff(Ruies_Indicator_t* indicator) {
+    if (indicator->state == INDICATOR_ON) indicator->state = INDICATOR_OFF;
+    else if (indicator->state == INDICATOR_OFF) indicator->state = INDICATOR_ON;
+    else if (indicator->state == INDICATOR_BLINKING) indicator->state = INDICATOR_OFF;
+}
+
+void set_indicator_blink(Ruies_Indicator_t* indicator, float blink_interval) {
+    indicator->state = INDICATOR_BLINKING;
+    indicator->blink_interval = blink_interval;
+}
+
+int cell_pos_cellbox(Ruies_CellBox_t cellbox, int id) {
+    for (int i = 0; i < cellbox.num_of_cells; ++i) {
+        if (cellbox.cells[i].id == id) return i;
     }
-    if (!found || cellbox->cells[cell_num].is_inscribed_elem) __ruies_error = 1;
-    else {
-        switch (type) {
-            case BUTTON:
-                ((Ruies_Button_t*)elem)->bounds = elem_bounds;
-                break;
-            case TOGGLE:
-                ((Ruies_Toggle_t*)elem)->bounds = elem_bounds;
-                break;
-            case TITLEBAR:
-                ((Ruies_TitleBar_t*)elem)->bounds = elem_bounds;
-                break;
-            case LABEL:
-                ((Ruies_Label_t*)elem)->bounds = elem_bounds;
-                break;
-            default:
-                __ruies_error = 1;
-                break;
-        }
-        cellbox->number_of_inscribed_elems++;
-        cellbox->cells[cell_num].is_inscribed_elem = true;
-        __ruies_error = 0;
-    }
+    return -1;
+}
+
+void inscribe_button_into_cell(Ruies_Button_t* button, Ruies_CellBox_t* cellbox, int cell_idx) {
+    int cell_pos = cell_pos_cellbox(*cellbox, cell_idx);
+    if (cell_pos < 0) RUIES_ERROR_OUT(); 
+    if (cellbox->cells[cell_pos].is_inscribed_elem || button->is_inscribed_in_cell) RUIES_ERROR_OUT(); 
+
+    button->bounds = cellbox->cells[cell_pos].bounds;
+    button->is_inscribed_in_cell = true;
+    ++cellbox->number_of_inscribed_elems;
+    cellbox->cells[cell_pos].is_inscribed_elem = true;
+    __ruies_error = 0;
+}
+
+void inscribe_toggle_into_cell(Ruies_Toggle_t* toggle, Ruies_CellBox_t* cellbox, int cell_idx) {
+    int cell_pos = cell_pos_cellbox(*cellbox, cell_idx);
+    if (cell_pos < 0) RUIES_ERROR_OUT();
+    if (cellbox->cells[cell_pos].is_inscribed_elem || toggle->is_inscribed_in_cell) RUIES_ERROR_OUT();
+
+    toggle->bounds = cellbox->cells[cell_pos].bounds;
+    toggle->is_inscribed_in_cell = true;
+    ++cellbox->number_of_inscribed_elems;
+    cellbox->cells[cell_pos].is_inscribed_elem = true;
+    __ruies_error = 0;
 }
 
 void insert_cellbox_into_window_box(Ruies_CellBox_t* cellbox, Ruies_WindowBox_t winbox) {
@@ -1349,31 +1397,31 @@ void insert_cellbox_into_window_box(Ruies_CellBox_t* cellbox, Ruies_WindowBox_t 
     if (winbox.border_style == NORMAL_BORDER) bounds = RECTWITHBORDER(winbox.bounds, winbox.style[ATTR_BORDER_WIDTH]);
     else bounds = RECTWITHBORDER(winbox.bounds, winbox.style[ATTR_BORDER_GAP]+(2.0f*winbox.style[ATTR_BORDER_WIDTH]));
     cellbox->bounds = bounds;
-    calculate_cells(cellbox);
+    calculate_cells(&cellbox->cells, bounds, cellbox->cell_cols, cellbox->cell_rows, cellbox->cell_margin);
     __ruies_error = 0;
 }
 
 void set_cellbox_cell_margin(Ruies_CellBox_t* cellbox, uint32_t cell_margin) {
     cellbox->cell_margin = cell_margin;
-    calculate_cells(cellbox);
+    calculate_cells(&cellbox->cells, cellbox->bounds, cellbox->cell_cols, cellbox->cell_rows, cell_margin);
     __ruies_error = 0;
 }
 
-void calculate_cells(Ruies_CellBox_t* cellbox) {
-    float horizontal_step = cellbox->cell_margin;
-    float vertical_step = cellbox->cell_margin;
-    float horiz_div = ((cellbox->bounds.width-((cellbox->cell_cols+1)*cellbox->cell_margin))/(float)cellbox->cell_cols);
-    float verti_div = ((cellbox->bounds.height-((cellbox->cell_rows+1)*cellbox->cell_margin))/(float)cellbox->cell_rows);
+void calculate_cells(Ruies_CellBoxCell_t** cells, Ruies_Rect_t cellbox_bounds, uint32_t cols, uint32_t rows, float cell_margin) {
+    float horizontal_step = cell_margin;
+    float vertical_step = cell_margin;
+    float horiz_div = ((cellbox_bounds.width-((cols+1)*cell_margin))/(float)cols);
+    float verti_div = ((cellbox_bounds.height-((rows+1)*cell_margin))/(float)rows);
 
-    for (uint32_t i = 0; i < cellbox->num_of_cells; ++i) {
-        cellbox->cells[i].bounds.x = cellbox->bounds.x+horizontal_step;
-        cellbox->cells[i].bounds.y = cellbox->bounds.y+vertical_step;
-        cellbox->cells[i].bounds.width = horiz_div;
-        cellbox->cells[i].bounds.height = verti_div;
-        horizontal_step += (horiz_div+cellbox->cell_margin);
-        if ((i+1) % cellbox->cell_cols == 0) {
-            vertical_step += (verti_div+cellbox->cell_margin);
-            horizontal_step = cellbox->cell_margin;
+    for (uint32_t i = 0; i < cols*rows; ++i) {
+        (*cells)[i].bounds.x = cellbox_bounds.x+horizontal_step;
+        (*cells)[i].bounds.y = cellbox_bounds.y+vertical_step;
+        (*cells)[i].bounds.width = horiz_div;
+        (*cells)[i].bounds.height = verti_div;
+        horizontal_step += (horiz_div+cell_margin);
+        if ((i+1) % cols == 0) {
+            vertical_step += (verti_div+cell_margin);
+            horizontal_step = cell_margin;
         }
     }
     __ruies_error = 0;
@@ -1428,28 +1476,28 @@ void attach_label_to_elem(const void* elem, Ruies_ElementTypes_t type, Ruies_Lab
             elem_bounds = (*(Ruies_Label_t*)elem).bounds;
             break;
         default:
-            __ruies_error = 1;
+            RUIES_ERROR_OUT();
             break;
     }
     switch (attach_to) {
-        case TO_THE_LEFT:
+        case ATTACH_LEFT:
             label->bounds.x = elem_bounds.x-label->bounds.width;
             label->bounds.y = elem_bounds.y;
             break;
-        case ON_TOP:
+        case ATTACH_TOP:
             label->bounds.x = elem_bounds.x;
             label->bounds.y = elem_bounds.y-label->bounds.height;
             break;
-        case TO_THE_RIGHT:
+        case ATTACH_RIGHT:
             label->bounds.x = elem_bounds.x+elem_bounds.width;
             label->bounds.y = elem_bounds.y;
             break;
-        case TO_BOTTOM:
+        case ATTACH_BOTTOM:
             label->bounds.x = elem_bounds.x;
             label->bounds.y = elem_bounds.y+elem_bounds.height;
             break;
         default:
-            __ruies_error = 1;
+            RUIES_ERROR_OUT();
             break;
     }
     label->is_attached = true;
@@ -1526,6 +1574,11 @@ void set_checkbox_style_attr(Ruies_CheckBox_t* checkbox, Ruies_ElemAttr_t attr, 
     __ruies_error = 0;
 }
 
+void set_indicator_style_attr(Ruies_Indicator_t* indic, Ruies_ElemAttr_t attr, uint32_t value) {
+    indic->style[attr] = value;
+    __ruies_error = 0;
+}
+
 /* Function to adjuct positions and dimensions of every button in button array so that they will stretch horizotaly to the until_x value 
  * keeping spacing the same between buttons */
 void stretch_button_grid_horiz(Ruies_ButtonGrid_t* button_grid, uint32_t horizontal_spacing, uint32_t until_x) {
@@ -1572,10 +1625,12 @@ void stretch_button_grid_verti(Ruies_ButtonGrid_t* button_grid, uint32_t vertica
 /* Function for rendering a button */
 bool render_button(Ruies_Button_t* button, Ruies_ElemState_t* state) {
     bool hover = CheckCollisionPointRec(GetMousePosition(), RAYLIB_RECT(button->bounds));
-    bool clicked = IsMouseButtonDown(0);
-    if (hover && !clicked) button->state = FOCUSED;
-    else if (hover && clicked) button->state = CLICKED;
-    else button->state = NORMAL;
+    bool pressed = false;
+    if (hover) {
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) button->state = CLICKED;
+        else button->state = FOCUSED;
+        if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) pressed = true;
+    } else button->state = NORMAL;
 
     Ruies_Color_t border_color, base_color, text_color;
     get_style_colors(button->state, button->style, &border_color, &base_color, &text_color);
@@ -1587,8 +1642,7 @@ bool render_button(Ruies_Button_t* button, Ruies_ElemState_t* state) {
 
     __ruies_error = 0;
     if (state != NULL) *state = button->state;
-    if (button->state == CLICKED) return true;
-    else return false;
+    return pressed;
 }
 
 /* Function to render a button array */
@@ -1705,29 +1759,13 @@ bool render_checkbox(Ruies_CheckBox_t* checkbox, Ruies_ElemState_t* state) {
 
     Ruies_Color_t border_color, base_color, text_color;
 
-    Vector2 text_dims = MeasureTextEx(checkbox->font, checkbox->text, checkbox->font_size, 0);
-    Ruies_Vec2_t text_pos;
-    if (checkbox->text_pos == LEFT_SIDE) {
-        text_pos = (Ruies_Vec2_t){
-            .x = checkbox->bounds.x-checkbox->style[ATTR_RIGHT_PADDING]-text_dims.x,
-            .y = checkbox->bounds.y+(checkbox->bounds.height-text_dims.y)/2.0f,
-        };
-    } else if (checkbox->text_pos == RIGHT_SIDE) {
-        text_pos = (Ruies_Vec2_t){
-            .x = checkbox->bounds.x+checkbox->bounds.width+checkbox->style[ATTR_LEFT_PADDING],
-            .y = checkbox->bounds.y+(checkbox->bounds.height-text_dims.y)/2.0f,
-        };
-    } else if (checkbox->text_pos == UP) {
-        text_pos = (Ruies_Vec2_t){
-            .x = checkbox->bounds.x+(checkbox->bounds.width-text_dims.x)/2.0f,
-            .y = checkbox->bounds.y-checkbox->style[ATTR_BOTTOM_PADDING]-((checkbox->bounds.height-text_dims.y)/2.0f)-text_dims.y,
-        };
-    } else if (checkbox->text_pos == DOWN) {
-        text_pos = (Ruies_Vec2_t){
-            .x = checkbox->bounds.x+(checkbox->bounds.width-text_dims.x)/2.0f,
-            .y = checkbox->bounds.y+checkbox->style[ATTR_TOP_PADDING]+((checkbox->bounds.height-text_dims.y)/2.0f)+text_dims.y,
-        };
-    }
+    Ruies_Padding_t padding = {
+        .from_left = checkbox->style[ATTR_LEFT_PADDING],
+        .from_right = checkbox->style[ATTR_RIGHT_PADDING],
+        .from_top = checkbox->style[ATTR_TOP_PADDING],
+        .from_bottom = checkbox->style[ATTR_BOTTOM_PADDING],
+    };
+    Ruies_Vec2_t text_pos = __get_text_placement_pos(checkbox->bounds, padding, checkbox->text_pos, checkbox->font, checkbox->font_size, checkbox->text);
     get_style_colors(checkbox->state, checkbox->style, &border_color, &base_color, &text_color);
     /* Drawing */
     ruies_draw_rect_with_border(checkbox->bounds, checkbox->style[ATTR_BORDER_WIDTH], border_color, base_color);
@@ -1740,6 +1778,42 @@ bool render_checkbox(Ruies_CheckBox_t* checkbox, Ruies_ElemState_t* state) {
     if (checkbox->state == CLICKED) return true;
     else return false;
 } 
+
+void render_indicator(Ruies_Indicator_t indic, Ruies_IndicatorState_t* state) {
+    Ruies_Color_t border_color, base_color, text_color;
+    Ruies_Rect_t bounds = {
+        .x = indic.pos.x-indic.radius,
+        .y = indic.pos.y-indic.radius,
+        .width = 2.0f*indic.radius,
+        .height = 2.0f*indic.radius,
+    };
+    Ruies_Padding_t padding = {
+        .from_left = indic.style[ATTR_LEFT_PADDING],
+        .from_right = indic.style[ATTR_RIGHT_PADDING],
+        .from_top = indic.style[ATTR_TOP_PADDING],
+        .from_bottom = indic.style[ATTR_BOTTOM_PADDING],
+    };
+    Ruies_Vec2_t text_pos = __get_text_placement_pos(bounds, padding, indic.text_placement, indic.font, indic.font_size, indic.text);
+    static bool flick_on = false;
+    Ruies_ElemState_t tmp_state;
+    if (indic.state == INDICATOR_ON || (indic.state == INDICATOR_BLINKING && indic.blink_interval > 0.0f && flick_on)) {
+        tmp_state = CLICKED;
+    } else if (indic.state == INDICATOR_OFF || (indic.state == INDICATOR_BLINKING && indic.blink_interval > 0.0f && !flick_on)) {
+        tmp_state = NORMAL;
+    }
+    static float frame_time = 0.0f;
+    frame_time += GetFrameTime();
+    if (frame_time >= (1.0f/indic.blink_interval)) {
+        if (indic.state == INDICATOR_BLINKING) flick_on = !flick_on; 
+        frame_time = 0.0f;
+    }
+    get_style_colors(tmp_state, indic.style, &border_color, &base_color, &text_color);
+    DrawCircleV(RAYLIB_VEC2(indic.pos), indic.radius, RAYLIB_COLOR(border_color));
+    DrawCircleV(RAYLIB_VEC2(indic.pos), indic.radius-indic.style[ATTR_BORDER_WIDTH], RAYLIB_COLOR(base_color));
+    DrawTextEx(indic.font, indic.text, RAYLIB_VEC2(text_pos), indic.font_size, 0, RAYLIB_COLOR(text_color));
+    if (state != NULL) *state = indic.state;
+    __ruies_error = 0;
+}
 /* Internal function to calculate the position of the boundsagle relative to border width */
 void ruies_draw_rect_with_border(Ruies_Rect_t bounds, uint32_t border_width, Ruies_Color_t border_color, Ruies_Color_t base_color) {
     DrawRectangleRec(RAYLIB_RECT(bounds), RAYLIB_COLOR(border_color));
@@ -1756,7 +1830,7 @@ Ruies_Vec2_t __get_elem_text_pos(Ruies_Rect_t bounds, Font font, const char* tex
 }
 
 Ruies_Vec2_t __get_text_pos_align(Ruies_Rect_t bounds, uint32_t left_padding, uint32_t right_padding, 
-                             Ruies_TextAlignment_t text_align, Font font, float font_size, const char* text) {
+                                  Ruies_TextAlignment_t text_align, Font font, float font_size, const char* text) {
     Ruies_Vec2_t text_pos = {0};
     Ruies_Vec2_t text_dims = RUIES_VEC2(MeasureTextEx(font, text, font_size, 0));
     /* Calculates the distance from the sides */
@@ -1777,7 +1851,36 @@ Ruies_Vec2_t __get_text_pos_align(Ruies_Rect_t bounds, uint32_t left_padding, ui
             __ruies_error = 1;
             break;
     }
-    __ruies_error = 0;
+    if (!__ruies_error) __ruies_error = 0;
+    return text_pos;
+}
+
+Ruies_Vec2_t __get_text_placement_pos(Ruies_Rect_t elem_bounds, Ruies_Padding_t padding, Ruies_TextPlacement_t text_placement, 
+                                      Font font, float font_size, const char* text) {
+    Ruies_Vec2_t text_pos = {0};
+    Ruies_Vec2_t text_dims = RUIES_VEC2(MeasureTextEx(font, text, font_size, 0));
+    switch (text_placement) {
+        case TEXT_LEFT:
+            text_pos.x = elem_bounds.x-padding.from_right-text_dims.x;
+            text_pos.y = elem_bounds.y+(elem_bounds.height-text_dims.y)/2.0f;
+            break;
+        case TEXT_RIGHT:
+            text_pos.x = elem_bounds.x+elem_bounds.width+padding.from_left;
+            text_pos.y = elem_bounds.y+(elem_bounds.height-text_dims.y)/2.0f;
+            break;
+        case TEXT_UP:
+            text_pos.x = elem_bounds.x+(elem_bounds.width-text_dims.x)/2.0f;
+            text_pos.y = elem_bounds.y-padding.from_bottom-((elem_bounds.height-text_dims.y)/2.0f)-text_dims.y;
+            break;
+        case TEXT_DOWN:
+            text_pos.x = elem_bounds.x+(elem_bounds.width-text_dims.x)/2.0f;
+            text_pos.y = elem_bounds.y+padding.from_top+((elem_bounds.height-text_dims.y)/2.0f)+text_dims.y;
+        break;
+        default:
+            __ruies_error = 1;
+            break;
+    }
+    if (!__ruies_error) __ruies_error = 0;
     return text_pos;
 }
 

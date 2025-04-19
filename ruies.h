@@ -1,6 +1,10 @@
 /* 
  * ruies.h is a simple header-only library that adds some ui elements be used in raylib applications
  *
+ * Ruies v1.0 - finalized 
+ *     - A lot of missing functionality and a lot of bugs
+ *     - use it only for testing
+ *
  *                                                      GITHUB
  *     Created by: KryonicNapkin        - https://www.github.com/KryonicNapkin/ruies.h
  *     Credit: raysan5's raygui library - https://www.github.com/raysan5/raygui
@@ -38,9 +42,10 @@
 #define RUIES_H_
 
 #include <stdint.h>                     /* For type compatibility */
+#include <stddef.h>                     /* NULL pointer */
 
 /* #include "raylib.h" */
-#ifndef USE_CUSTOM_FONT
+#ifndef RUIES_USE_CUSTOM_FONT
 /* Default font */
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -496,7 +501,7 @@ static Font RuiesLoadDefaultFont(void) {
 
     return font;
 }
-#endif /* ifndef USE_CUSTOM_FONT */
+#endif /* ifndef RUIES_USE_CUSTOM_FONT */
 
 #define MAX_ELEMENTS_COUNT     9
 #define MAX_ELEMENT_ATTRIBUTES 17
@@ -779,7 +784,7 @@ typedef struct {
 
 #define __BORDER_WIDTH       1
 
-#ifndef USE_CUSTOM_FONT
+#ifndef RUIES_USE_CUSTOM_FONT
     #define RUIES_FONT       RuiesLoadDefaultFont()
     #define RUIES_FONT_SIZE  25                      /* Set font size */
 #endif
@@ -790,7 +795,7 @@ typedef struct {
 /*-----------------   FUNCTION DECLARATIONS   -----------------*/
 /*-------------------------------------------------------------*/
 
-#ifndef USE_CUSTOM_FONT
+#ifndef RUIES_USE_CUSTOM_FONT
     void ruies_load_default_font(void);
     Font ruies_extract_default_font(void);
 #else 
@@ -1048,14 +1053,14 @@ static Ruies_GlobalStyle_t __style = {
     },
     /*                  BUTTON         BUTTON_GRID       TITLEBAR          TOGGLE            LABEL           CELLBOX         WINDOWBOX       CHECKBOX        INDICATOR */
     .fonts = {        EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,      EMPTY_FONT,     EMPTY_FONT,      EMPTY_FONT},
-    #ifndef USE_CUSTOM_FONT
+    #ifndef RUIES_USE_CUSTOM_FONT
     .font_sizes = {RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE, RUIES_FONT_SIZE},
     #else
     .font_sizes = {       0,               0,               0,               0,               0,               0,               0,               0,                0},
     #endif
 };
 
-#ifndef USE_CUSTOM_FONT
+#ifndef RUIES_USE_CUSTOM_FONT
     void ruies_load_default_font(void) {
         Font ruies_font = RUIES_FONT;
         for (int i = 0; i < MAX_ELEMENTS_COUNT; ++i) {
